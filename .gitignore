@@ -1,1 +1,5 @@
 node_modules
+
+# Ignore build and tool cache
+.next/
+.claude/
