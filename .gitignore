@@ -3,3 +3,6 @@ node_modules
 # Ignore build and tool cache
 .next/
 .claude/
+
+# macOS and editor artifacts
+.DS_Store
