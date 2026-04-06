@@ -786,13 +786,20 @@ body.scroll-locked {
   height: 100vh; /* Full viewport height */
   padding: 0 clamp(1rem, 3vw, 2rem);
   gap: clamp(1rem, 3vw, 2rem);
-  margin: 0 80px;
+  /* margin only on large screens */
+  margin: 0;
   background: rgba(24, 31, 38, 0.03);
   border-radius: 8px;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
   z-index: 103;
+}
+
+@media screen and (min-width: 1280px) {
+  .about-expertise-section {
+    margin: 0 80px;
+  }
 }
 
 /* =========================================
@@ -1062,6 +1069,84 @@ body.scroll-locked {
   margin: 0;
   opacity: 0.95;
   font-weight: 400;
+}
+
+/* =========================================
+   EXPERTISE ACCORDION (mobile)
+   ========================================= */
+
+.expertise-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.expertise-accordion-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.expertise-accordion-item.active {
+  border-color: rgba(0, 255, 255, 0.35);
+  background: linear-gradient(135deg,
+    rgba(0, 255, 255, 0.07),
+    rgba(183, 0, 255, 0.07)
+  );
+}
+
+.expertise-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  color: #fff;
+  gap: 12px;
+}
+
+.expertise-accordion-header .caption {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.expertise-accordion-icon {
+  font-size: 1.25rem;
+  font-weight: 300;
+  color: rgba(0, 255, 255, 0.8);
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.expertise-accordion-item.active .expertise-accordion-icon {
+  color: #00ffff;
+}
+
+.expertise-accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+  padding: 0 18px;
+}
+
+.expertise-accordion-item.active .expertise-accordion-body {
+  max-height: 200px;
+  padding: 0 18px 14px;
+}
+
+.expertise-accordion-body p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.72);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 10px;
 }
 
 /* =========================================
@@ -1742,4 +1827,244 @@ body.scroll-locked {
   .footer-bottom-row {
     gap: 4px;
   }
+}
+
+/* =========================================
+   MOBILE TAB NAVIGATION (APP-LIKE) & FAB
+   ========================================= */
+
+@media screen and (max-width: 1024px) {
+  body {
+    padding-bottom: 80px;
+  }
+}
+
+/* ── Bottom Nav Bar ── */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 76px;
+  background: rgba(6, 12, 24, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 9999;
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+@media screen and (min-width: 1025px) {
+  .mobile-bottom-nav,
+  .mobile-fab-container {
+    display: none !important;
+  }
+}
+
+/* ── Each Tab Button ── */
+.nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.38);
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  font-weight: 500;
+  gap: 5px;
+  flex: 1;
+  height: 100%;
+  cursor: pointer;
+  transition: color 0.25s ease;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item.active {
+  color: #fff;
+}
+
+/* ── Icon Wrapper ── */
+.nav-icon {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 32px;
+  border-radius: 20px;
+  transition: background 0.25s ease;
+}
+
+/* Active pill background behind the icon */
+.nav-item.active .nav-icon {
+  background: rgba(0, 220, 255, 0.12);
+}
+
+/* ── SVG icons — stroke only, no fill override ── */
+.nav-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.25s ease, filter 0.25s ease;
+}
+
+.nav-item.active .nav-icon svg {
+  stroke: #00dcff;
+  filter: drop-shadow(0 0 5px rgba(0, 220, 255, 0.6));
+}
+
+/* ── Logo/Image icon for Home tab ── */
+.nav-icon img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+  opacity: 0.45;
+}
+
+.nav-item.active .nav-icon img {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(246, 174, 45, 0.7));
+}
+
+/* ── Label ── */
+.nav-label {
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* ── Active dot indicator ── */
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: #00dcff;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-item.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* =========================================
+   FAB (Floating Action Button) — Socials
+   ========================================= */
+.mobile-fab-container {
+  position: fixed;
+  bottom: 92px;
+  right: 16px;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 10px;
+}
+
+.fab-trigger {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0, 220, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 220, 255, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 10px rgba(0, 220, 255, 0.15);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fab-trigger:active {
+  transform: scale(0.92);
+}
+
+.fab-trigger.open {
+  background: rgba(255, 50, 100, 0.12);
+  border-color: rgba(255, 50, 100, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 10px rgba(255, 50, 100, 0.2);
+  transform: rotate(135deg);
+}
+
+.fab-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 300;
+  transition: color 0.2s ease;
+}
+
+.fab-menu-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px) scale(0.9);
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fab-menu-items.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.fab-item {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(12, 18, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+}
+
+.fab-item:active {
+  transform: scale(0.9);
+}
+
+.fab-item img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: brightness(0.75);
+  transition: filter 0.2s ease;
+}
+
+.fab-item:hover img,
+.fab-item:active img {
+  filter: brightness(1.2);
 }

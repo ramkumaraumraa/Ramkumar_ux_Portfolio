@@ -10,8 +10,14 @@ const Logo = '/assets/imgs/Logo.svg';
 const PhoneIcon = '/assets/imgs/icons/Phone.svg';
 const EmailIcon = '/assets/imgs/icons/Email.svg';
 const CopyIcon = '/assets/imgs/icons/file_copy.svg';
+import MobileBottomNav from './MobileBottomNav';
 
-const Navbar = () => {
+interface NavbarProps {
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () => {} }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -221,13 +227,14 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="navbar">
-        <div className="logo-section">
-          <a href="#home" onClick={scrollToHome} className="logo-link">
-            <img src={Logo} alt="Logo" className="logo-image" />
-            <span className="logo-text">Ramkumar</span>
-          </a>
-        </div>
+      {!isMobile && (
+        <nav className="navbar">
+          <div className="logo-section">
+            <a href="#home" onClick={scrollToHome} className="logo-link">
+              <img src={Logo} alt="Logo" className="logo-image" />
+              <span className="logo-text">Ramkumar</span>
+            </a>
+          </div>
 
         {!isMobile && (
           <div className="nav-right">
@@ -300,88 +307,15 @@ const Navbar = () => {
             </div>
           </div>
         )}
-
-        {isMobile && (
-          <div
-            className={`hamburger-menu ${menuOpen ? 'active' : ''}`}
-            onClick={toggleMobileMenu}
-            aria-expanded={menuOpen}
-            aria-label="Toggle menu"
-          >
-            <span className="hamburger-bar"></span>
-            <span className="hamburger-bar"></span>
-            <span className="hamburger-bar"></span>
-          </div>
-        )}
-      </nav>
+        </nav>
+      )}
 
       {isMobile && (
-        <div id="mobile-menu" className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
-          <ul className="body-2">
-            <li><a href="#works" onClick={toggleMobileMenu}>Works</a></li>
-            <li><a href="#about" onClick={toggleMobileMenu}>About</a></li>
-            <li><a href="#process" onClick={toggleMobileMenu}>Process</a></li>
-            <div className="menu-separator"></div>
-            <li className="contact-info-mobile">
-              <p>
-                <img src={EmailIcon} alt="Email" className="icon" />
-                <span>ramkumargd01@gmail.com</span>
-              </p>
-              <button 
-                onClick={(e) => copyToClipboard('ramkumargd01@gmail.com', e)} 
-                className="copy-button"
-              >
-                <img src={CopyIcon} alt="Copy" />
-              </button>
-            </li>
-            <li className="contact-info-mobile">
-              <p>
-                <img src={PhoneIcon} alt="Phone" className="icon" />
-                <span>+91 9176750625</span>
-              </p>
-              <button 
-                onClick={(e) => copyToClipboard('+91 9176750625', e)} 
-                className="copy-button"
-              >
-                <img src={CopyIcon} alt="Copy" />
-              </button>
-            </li>
-            <div className="menu-separator"></div>
-            <li>
-              <button onClick={openContactForm} className="mobile-action-button">
-                Open Contact Form
-              </button>
-            </li>
-            <li>
-              <button onClick={downloadResume} className="mobile-action-button">
-                Download Resume
-              </button>
-            </li>
-            <div className="menu-separator"></div>
-            
-            <li className="mobile-social-container">
-              <div className="mobile-social-icons">
-                {socialIcons.map((icon, index) => (
-                  <a
-                    key={index}
-                    href={icon.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mobile-social-icon-link"
-                  >
-                    <img
-                      src={icon.default}
-                      alt={`Social Icon ${index + 1}`}
-                      className="mobile-social-icon"
-                      onMouseOver={(e) => (e.currentTarget.src = icon.hover)}
-                      onMouseOut={(e) => (e.currentTarget.src = icon.default)}
-                    />
-                  </a>
-                ))}
-              </div>
-            </li>
-          </ul>
-        </div>
+        <MobileBottomNav 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          openContactForm={openContactForm} 
+        />
       )}
 
       <Form isOpen={isFormOpen} onClose={closeContactForm} />

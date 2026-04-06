@@ -22,6 +22,7 @@ const ProcessSection = dynamic(() => import('../components/sections/Process'), {
 const FooterSection = dynamic(() => import('../components/sections/Footer'), { ssr: false });
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState('home');
   const [loaderComplete, setLoaderComplete] = useState(false);
   const [backgroundReady, setBackgroundReady] = useState(false);
   const [preparingExit, setPreparingExit] = useState(false);
@@ -155,32 +156,42 @@ export default function Home() {
             </div>
           </div>
           
-          <Navbar />
+          <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
           <SocialSidebar />
 
           <main style={{
             animation: 'slideUp 1s ease-out',
             opacity: 1
           }}>
-            <Suspense fallback={<div className="section-loader">Loading...</div>}>
-              <HomeSection />
-            </Suspense>
+            {(!responsive.isMobile || activeTab === 'home') && (
+              <Suspense fallback={<div className="section-loader">Loading...</div>}>
+                <HomeSection />
+              </Suspense>
+            )}
 
-            <Suspense fallback={<div className="section-loader">Loading...</div>}>
-              <WorksSection />
-            </Suspense>
+            {(!responsive.isMobile || activeTab === 'works') && (
+              <Suspense fallback={<div className="section-loader">Loading...</div>}>
+                <WorksSection />
+              </Suspense>
+            )}
 
-            <Suspense fallback={<div className="section-loader">Loading...</div>}>
-              <AboutSection />
-            </Suspense>
+            {(!responsive.isMobile || activeTab === 'about') && (
+              <Suspense fallback={<div className="section-loader">Loading...</div>}>
+                <AboutSection />
+              </Suspense>
+            )}
 
-            <Suspense fallback={<div className="section-loader">Loading...</div>}>
-              <ProcessSection />
-            </Suspense>
+            {(!responsive.isMobile || activeTab === 'process') && (
+              <Suspense fallback={<div className="section-loader">Loading...</div>}>
+                <ProcessSection />
+              </Suspense>
+            )}
 
-            <Suspense fallback={<div className="section-loader">Loading...</div>}>
-              <FooterSection />
-            </Suspense>
+            {(!responsive.isMobile || activeTab === 'contact') && (
+              <Suspense fallback={<div className="section-loader">Loading...</div>}>
+                <FooterSection />
+              </Suspense>
+            )}
           </main>
 
           <Cursor />

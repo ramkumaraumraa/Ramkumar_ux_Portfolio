@@ -12,6 +12,9 @@ const About = () => {
   const [hoveredExpertise, setHoveredExpertise] = useState<number | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipPlacement, setTooltipPlacement] = useState("right");
+  const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
+  const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
 
   const expertiseData = [
     {
@@ -19,7 +22,7 @@ const About = () => {
       description: "Conduct interactive workshops or training sessions to educate teams and aspiring designers on UX best practices, methodologies, and strategies."
     },
     {
-      title: "Branding, Design Systems, & Audits", 
+      title: "Branding, Design Systems, & Audits",
       description: "I develop scalable design systems and libraries that ensure consistent, efficient product development and brand alignment, while conducting in-depth UX audits to enhance usability, accessibility, and overall user satisfaction across websites, mobile apps, and digital platforms."
     },
     {
@@ -27,10 +30,19 @@ const About = () => {
       description: "Create responsive, high-performing websites and landing pages designed to captivate users, generate leads, and drive conversions."
     },
     {
-      title: "IoT, Mobility, SaaS, & AI Products", 
+      title: "IoT, Mobility, SaaS, & AI Products",
       description: "I design intuitive mobility smart systems and digital products that align user needs with business goals, while leveraging human-centered AI principles to craft conversational UIs, ethical systems, and inclusive experiences."
     },
   ];
+
+  // Detect desktop vs mobile
+  useEffect(() => {
+    setMounted(true);
+    const check = () => setIsDesktop(window.innerWidth >= 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -38,19 +50,20 @@ const About = () => {
     if (!aboutRef.current) return;
 
     gsapContextRef.current = gsap.context(() => {
+      // Use small pixel offsets instead of xPercent to avoid large shifts
+      // when the section height exceeds 100vh
       gsap.fromTo(
         '.about-left',
-        { scale: 0.9, opacity: 0.8, xPercent: -8 },
+        { scale: 0.95, opacity: 0, x: -24 },
         {
           scale: 1,
           opacity: 1,
-          xPercent: 0,
+          x: 0,
           ease: 'power2.out',
-          duration: 2,
+          duration: 1.4,
           scrollTrigger: {
             trigger: aboutRef.current,
-            start: 'top 75%',
-            end: 'bottom top',
+            start: 'top 80%',
             toggleActions: 'play reverse play reverse',
           },
         }
@@ -58,17 +71,16 @@ const About = () => {
 
       gsap.fromTo(
         '.about-right',
-        { scale: 0.9, opacity: 0.8, xPercent: 8 },
+        { scale: 0.95, opacity: 0, x: 24 },
         {
           scale: 1,
           opacity: 1,
-          xPercent: 0,
+          x: 0,
           ease: 'power2.out',
-          duration: 2,
+          duration: 1.4,
           scrollTrigger: {
             trigger: aboutRef.current,
-            start: 'top 75%',
-            end: 'bottom top',
+            start: 'top 80%',
             toggleActions: 'play reverse play reverse',
           },
         }
@@ -76,17 +88,17 @@ const About = () => {
 
       gsap.fromTo(
         '.stat-item',
-        { scale: 0.8, opacity: 0, y: 30 },
+        { scale: 0.8, opacity: 0, y: 20 },
         {
           scale: 1,
           opacity: 1,
           y: 0,
           ease: 'power2.out',
-          duration: 1.5,
-          stagger: 0.2,
+          duration: 1.2,
+          stagger: 0.15,
           scrollTrigger: {
             trigger: '.about-stats',
-            start: 'top 85%',
+            start: 'top 90%',
             toggleActions: 'play none none reverse',
           },
         }
@@ -94,17 +106,17 @@ const About = () => {
 
       gsap.fromTo(
         '.expertise-item',
-        { scale: 0.9, opacity: 0, y: 20 },
+        { scale: 0.9, opacity: 0, y: 16 },
         {
           scale: 1,
           opacity: 1,
           y: 0,
           ease: 'power2.out',
-          duration: 1,
-          stagger: 0.1,
+          duration: 0.9,
+          stagger: 0.08,
           scrollTrigger: {
             trigger: '.expertise-grid',
-            start: 'top 85%',
+            start: 'top 90%',
             toggleActions: 'play none none reverse',
           },
         }
@@ -130,39 +142,40 @@ const About = () => {
   const handleExpertiseMouseMove = (e: React.MouseEvent) => {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
+
     const offsetX = 15;
     const offsetY = 10;
     const tooltipWidth = 320;
     const tooltipHeight = 100;
-    
+
     let placement = "right";
     let x = e.clientX + offsetX;
     let y = e.clientY + offsetY;
-    
+
     if (x + tooltipWidth > viewportWidth - 20) {
       placement = "left";
       x = e.clientX - tooltipWidth - offsetX;
     }
-    
+
     if (y + tooltipHeight > viewportHeight - 20) {
       y = e.clientY - tooltipHeight - offsetY;
     }
-    
+
     if (x < 20) {
       x = 20;
       placement = "right";
     }
-    
+
     if (y < 20) {
       y = 20;
     }
-    
+
     setTooltipPlacement(placement);
     setTooltipPosition({ x, y });
   };
 
   const handleExpertiseMouseEnter = (index: number, e: React.MouseEvent) => {
+    if (!isDesktop) return;
     setHoveredExpertise(index);
     handleExpertiseMouseMove(e);
 
@@ -177,6 +190,7 @@ const About = () => {
   };
 
   const handleExpertiseMouseLeave = () => {
+    if (!isDesktop) return;
     const tooltip = document.querySelector(".expertise-tooltip");
     if (tooltip) {
       gsap.to(tooltip, {
@@ -191,6 +205,10 @@ const About = () => {
     }
   };
 
+  const toggleAccordion = (index: number) => {
+    setActiveAccordion(prev => prev === index ? null : index);
+  };
+
   return (
     <section ref={aboutRef} id="about" className="about-expertise-section">
       <div className="about-left">
@@ -200,8 +218,10 @@ const About = () => {
             alt="Ramkumar - Senior Product Designer and UX Mentor"
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
+            quality={90}
             style={{ objectFit: 'cover' }}
             className="profile-image"
+            priority
           />
         </div>
         <a
@@ -267,24 +287,51 @@ const About = () => {
         </div>
 
         <div className="expertise-section">
-          <div className="expertise-grid">
-            {expertiseData.map((item, index) => (
-              <div
-                key={index}
-                className="expertise-item card-button caption"
-                onMouseEnter={(e) => handleExpertiseMouseEnter(index, e)}
-                onMouseMove={handleExpertiseMouseMove}
-                onMouseLeave={handleExpertiseMouseLeave}
-              >
-                {item.title}
-                <span></span><span></span><span></span><span></span><span></span>
-              </div>
-            ))}
-          </div>
+          {/* Desktop: grid with hover tooltip */}
+          {mounted && isDesktop && (
+            <div className="expertise-grid">
+              {expertiseData.map((item, index) => (
+                <div
+                  key={index}
+                  className="expertise-item card-button caption"
+                  onMouseEnter={(e) => handleExpertiseMouseEnter(index, e)}
+                  onMouseMove={handleExpertiseMouseMove}
+                  onMouseLeave={handleExpertiseMouseLeave}
+                >
+                  {item.title}
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Mobile: accordion */}
+          {mounted && !isDesktop && (
+            <div className="expertise-accordion-list">
+              {expertiseData.map((item, index) => (
+                <div
+                  key={index}
+                  className={`expertise-accordion-item${activeAccordion === index ? ' active' : ''}`}
+                  onClick={() => toggleAccordion(index)}
+                >
+                  <div className="expertise-accordion-header">
+                    <span className="caption">{item.title}</span>
+                    <span className="expertise-accordion-icon">
+                      {activeAccordion === index ? '−' : '+'}
+                    </span>
+                  </div>
+                  <div className="expertise-accordion-body">
+                    <p className="body-2">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {hoveredExpertise !== null && (
+      {/* Desktop tooltip */}
+      {mounted && isDesktop && hoveredExpertise !== null && (
         <div
           className={`expertise-tooltip ${tooltipPlacement}`}
           style={{

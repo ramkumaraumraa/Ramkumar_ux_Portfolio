@@ -1,8 +1,11 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const SocialSidebar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
   const icons = [
     {
       default: '/assets/imgs/icons/social icons/01_Icon_Instagram.svg',
@@ -26,6 +29,46 @@ const SocialSidebar = () => {
     },
   ];
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 1024);
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <div className="mobile-fab-container">
+        <div className={`fab-menu-items ${isOpen ? 'open' : ''}`}>
+          {icons.map((icon, index) => (
+            <a
+              key={index}
+              href={icon.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="fab-item"
+            >
+              <img
+                src={icon.default}
+                alt={`Social Icon ${index + 1}`}
+                onMouseOver={(e) => (e.currentTarget.src = icon.hover)}
+                onMouseOut={(e) => (e.currentTarget.src = icon.default)}
+              />
+            </a>
+          ))}
+        </div>
+        
+        <button 
+          className={`fab-trigger ${isOpen ? 'open' : ''}`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <span className="fab-icon">+</span>
+        </button>
+      </div>
+    );
+  }
+
+  // Desktop original sidebar
   return (
     <div className="social-sidebar">
       {icons.map((icon, index) => (
