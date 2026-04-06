@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@import "../styles/theme.css";
+@import "../styles/index.css";
+@import "../styles/styles.css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Lexend Deca', sans-serif;
+  
+  --color-turquoise: #00ffff;
+  --color-blue: #00a2ff;
+  --color-purple: #b700ff;
+  
+  --color-pink-2: #ff93e7;
+  --color-pink-3: #ca1f7b;
+  --color-pink-4: magenta;
+  
+  --color-turquoise-2: #80fdff;
+  --color-turquoise-3: #4ffcff;
+  --color-turquoise-4: #1efbff;
+  
+  --color-blue-2: #99caff;
+  --color-blue-3: #269aff;
+  --color-blue-4: #009eff;
+}
+
+:root {
+  --background: #020c1b;
+  --foreground: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #020c1b;
+    --foreground: #ffffff;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
