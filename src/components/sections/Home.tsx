@@ -2,7 +2,6 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 const TEXTS = [
   { pre: 'HUMANIZING', main: 'TECH THROUGH', post: 'DESIGN', colorClass: 'turquoise' },
@@ -12,7 +11,6 @@ const TEXTS = [
 
 export default function Home() {
   const [index, setIndex] = useState(0);
-  const sectionRef = useRef<HTMLSelectElement>(null);
   const blockRef = useRef<HTMLDivElement>(null);
   const glowRedRef = useRef<HTMLDivElement>(null);
   const glowCyanRef = useRef<HTMLDivElement>(null);
@@ -29,8 +27,6 @@ export default function Home() {
   const { pre, main, post, colorClass } = TEXTS[index];
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
     setResponsive({
       isMobile: window.innerWidth < 768,
       isTablet: window.innerWidth < 1024
@@ -312,53 +308,28 @@ export default function Home() {
   }, [index]);
 
   useEffect(() => {
-    if (!blockRef.current || !sectionRef.current) return;
+    if (!blockRef.current) return;
 
     const onMove = (e: MouseEvent) => {
       if (isAnimatingRef.current) return;
-      
       const { innerWidth: w, innerHeight: h } = window;
       const x = e.clientX / w - 0.5;
       const y = e.clientY / h - 0.5;
-
       gsap.to(blockRef.current, {
         x: x * 40,
         y: y * 40,
         duration: 0.6,
         ease: 'power3.out',
-        force3D: true
+        force3D: true,
       });
     };
-    
+
     window.addEventListener('mousemove', onMove, { passive: true });
-
-    const st = ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: 'top top',
-      end: 'bottom+=500 top',
-      scrub: true,
-      onUpdate: (self) => {
-        if (!blockRef.current || isAnimatingRef.current) return;
-        
-        const p = self.progress;
-        gsap.to(blockRef.current, {
-          scale: 1 - p * 0.9,
-          opacity: 1 - p * 0.8,
-          duration: 0.1,
-          ease: 'none',
-          force3D: true
-        });
-      },
-    });
-
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      if (st) st.kill();
-    };
+    return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
   return (
-    <section id="hero" className="home cinematic-hero" ref={sectionRef as any} aria-labelledby="hero-text">
+    <section id="hero" className="home cinematic-hero" aria-labelledby="hero-text">
       <div className="hero-block" ref={blockRef} id="hero-text" aria-live="polite">
         <div className="glow glow--red" ref={glowRedRef} aria-hidden="true" />
         <div className="glow glow--cyan" ref={glowCyanRef} aria-hidden="true" />
