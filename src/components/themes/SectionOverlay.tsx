@@ -14,9 +14,10 @@ interface SectionOverlayProps {
 
 export default function SectionOverlay({ activeSection }: SectionOverlayProps) {
   const visible = activeSection !== 'home';
+  const footerClass = activeSection === 'footer' ? ' section-overlay--footer' : '';
 
   return (
-    <div className={`section-overlay${visible ? ' section-overlay--visible' : ''}`}>
+    <div className={`section-overlay${visible ? ' section-overlay--visible' : ''}${footerClass}`}>
       <Suspense fallback={null}>
         {activeSection === 'works'   && <WorksSection />}
         {activeSection === 'about'   && <AboutSection />}
