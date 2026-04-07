@@ -11,7 +11,6 @@ export default function Loader({ onComplete }: LoaderProps) {
   const [displayProgress, setDisplayProgress] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [isEntering, setIsEntering] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const circleRef = useRef<SVGCircleElement>(null);
   
@@ -53,8 +52,12 @@ export default function Loader({ onComplete }: LoaderProps) {
         setShowWelcome(true);
         
         setTimeout(() => {
-          gsap.timeline()
-            .fromTo(".welcome-title", 
+          gsap.timeline({
+            onComplete: () => {
+              if (onComplete) onComplete();
+            }
+          })
+            .fromTo(".welcome-title",
               { opacity: 0, y: 40 },
               { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }
             )
@@ -63,44 +66,24 @@ export default function Loader({ onComplete }: LoaderProps) {
               { opacity: 1, y: 0, duration: 1, ease: "power3.out" },
               "-=0.6"
             )
-            .fromTo(".enter-section",
-              { opacity: 0, scale: 0.8 },
-              { opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.5)" },
-              "-=0.4"
-            );
+            .to(".welcome-title, .welcome-subtitle", {
+              opacity: 0,
+              y: -20,
+              duration: 0.8,
+              ease: "power2.in",
+              delay: 1.2,
+            });
         }, 100);
       }, 600);
     }
   }, [displayProgress, isCompleting]);
-
-  const handleEnter = () => {
-    setIsEntering(true);
-    
-    gsap.timeline({
-      onComplete: () => {
-        if (onComplete) onComplete();
-      }
-    })
-    .to(".loader-content", {
-      scale: 0.9,
-      opacity: 0,
-      duration: 0.6,
-      ease: "power2.in"
-    })
-    .to(".loader", {
-      opacity: 0,
-      duration: 0.8,
-      ease: "power2.inOut",
-      display: "none"
-    }, "-=0.2");
-  };
 
   const svgSize = isMobile ? 220 : 280;
   const center = isMobile ? 110 : 140;
   const radius = isMobile ? 90 : 120;
 
   return (
-    <div className={`loader ${isEntering ? "fade-out" : ""}`}>
+    <div className="loader">
       <div className="loader-content">
         {!showWelcome && (
           <div className="progress-container">
@@ -146,33 +129,24 @@ export default function Loader({ onComplete }: LoaderProps) {
                 {Math.round(displayProgress)}%
               </h1>
               <p className="progress-label caption-text">
-                {displayProgress < 30 ? 'Initializing...' :
-                 displayProgress < 60 ? 'Loading Assets...' :
-                 displayProgress < 90 ? 'Preparing...' :
-                 'Ready'}
+                {displayProgress < 30 ? 'Building your universe...' :
+                 displayProgress < 60 ? 'Loading the world of design...' :
+                 displayProgress < 90 ? 'Almost there...' :
+                 'Stepping in'}
               </p>
             </div>
           </div>
         )}
 
         {showWelcome && (
-          <>
-            <div className="welcome-section">
-              <h1 className="welcome-title blue h1 neon" style={{ opacity: 0 }}>
-                Welcome to Ramkumar's
-              </h1>
-              <h3 className="welcome-subtitle turquoise h4 neon" style={{ opacity: 0 }}>
-                World of Design
-              </h3>
-            </div>
-            
-            <div className="enter-section" style={{ opacity: 0 }}>
-              <button className="enter-button" onClick={handleEnter}>
-                <span className="enter-text">Enter Journey</span>
-                <span className="enter-arrow">→</span>
-              </button>
-            </div>
-          </>
+          <div className="welcome-section">
+            <h1 className="welcome-title blue h1 neon" style={{ opacity: 0 }}>
+              Ramkumar's World of Design
+            </h1>
+            <h3 className="welcome-subtitle turquoise h4 neon" style={{ opacity: 0 }}>
+              is ready for you
+            </h3>
+          </div>
         )}
       </div>
     </div>
