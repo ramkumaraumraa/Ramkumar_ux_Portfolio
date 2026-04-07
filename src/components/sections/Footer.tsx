@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import Form from '../Form';
 
@@ -41,7 +39,7 @@ const testimonialsData: { name: string; role: string; description: string; image
   {
     name: 'JAYASHANKAR',
     role: 'Founder of Sachirva',
-    description: 'Ram is a very good team player with remarkable patience and skill. He took my e-learning startup idea from scratch, building the branding, design system, and complex product flows that enabled us to automate tests and deliver learning directly into students’ hands.',
+    description: 'Ram is a very good team player with remarkable patience and skill. He took my e-learning startup idea from scratch, building the branding, design system, and complex product flows that enabled us to automate tests and deliver learning directly into students' hands.',
     image: '/assets/imgs/Footer/Jayashankar.png',
   },
 ];
@@ -49,13 +47,8 @@ const testimonialsData: { name: string; role: string; description: string; image
 const Footer = () => {
   const [localTime, setLocalTime] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const testimonialsRef = useRef<HTMLDivElement>(null);
-  const sectionRef = useRef<HTMLElement>(null);
-  const scrollTweenRef = useRef<gsap.core.Tween | null>(null);
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
     const updateTime = () => {
       const now = new Date();
       const time = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
@@ -67,90 +60,23 @@ const Footer = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (!testimonialsRef.current || !sectionRef.current) return;
-
-    const ctx = gsap.context(() => {
-      const container = testimonialsRef.current?.querySelector('.testimonials-grid');
-      if (!container) return;
-
-      gsap.set(container, { x: 0, force3D: true });
-      const cards = Array.from(container.children);
-
-      const setCount = testimonialsData.length;
-      const firstSetEls = cards.slice(0, setCount);
-
-      const getOuterWidth = (el: Element) => {
-        const cs = getComputedStyle(el);
-        return el.getBoundingClientRect().width +
-               parseFloat(cs.marginLeft) + parseFloat(cs.marginRight);
-      };
-
-      let setWidth = firstSetEls.reduce((sum, el) => sum + getOuterWidth(el), 0);
-
-      while (container.scrollWidth < setWidth * 2 + 2) {
-        firstSetEls.forEach((el) => container.appendChild(el.cloneNode(true)));
-      }
-
-      setWidth = firstSetEls.reduce((sum, el) => sum + getOuterWidth(el), 0);
-
-      scrollTweenRef.current = gsap.to(container, {
-        x: `-=${setWidth}`,
-        duration: 40,
-        ease: 'none',
-        repeat: -1,
-        modifiers: {
-          x: (x: string) => {
-            const v = parseFloat(x);
-            const wrapped = ((v % -setWidth) + 0); 
-            return `${wrapped}px`;
-          }
-        }
-      });
-
-      container.addEventListener('mouseenter', () => {
-        if (scrollTweenRef.current) scrollTweenRef.current.pause();
-      });
-
-      container.addEventListener('mouseleave', () => {
-        if (scrollTweenRef.current) scrollTweenRef.current.resume();
-      });
-
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
-
-  const openContactForm = () => {
-    setIsFormOpen(true);
-  };
-
-  const closeContactForm = () => {
-    setIsFormOpen(false);
-  };
-
   return (
-    <section id="footer" className="footer-testimonials-section" ref={sectionRef}>
-      <div className="testimonials-content" ref={testimonialsRef}>
-        <h5 className="turquoise h5 neon section-sticky-label section-sticky-label--full" style={{ marginTop: '24px' }}>TESTIMONIALS</h5>
-        <div className="testimonials-grid">
+    <section id="footer" className="footer-testimonials-section">
+      <div className="testimonials-content">
+        <h5 className="turquoise h5 neon section-sticky-label section-sticky-label--full" style={{ marginTop: '24px' }}>
+          TESTIMONIALS
+        </h5>
+        <div className="testimonials-3d-grid">
           {testimonialsData.map((testimonial, index) => (
-            <div key={`testimonial-${index}`} className="testimonial-card" style={{ display: 'flex', opacity: 1, visibility: 'visible' }}>
+            <div key={`testimonial-${index}`} className="testimonial-card">
               <div className="testimonial-card-header">
-                <Image src={testimonial.image} alt={testimonial.name} width={64} height={64} className="testimonial-img" />
-                <div className="testimonial-card-content">
-                  <p className="body-title-2">{testimonial.name}</p>
-                </div>
-              </div>
-              <p className="body-1">{testimonial.role}</p>
-              <p className="caption-text">{testimonial.description}</p>
-            </div>
-          ))}
-          
-          {testimonialsData.map((testimonial, index) => (
-            <div key={`testimonial-duplicate-${index}`} className="testimonial-card" style={{ display: 'flex', opacity: 1, visibility: 'visible' }}>
-              <div className="testimonial-card-header">
-                <Image src={testimonial.image} alt={testimonial.name} width={64} height={64} className="testimonial-img" />
+                <Image
+                  src={testimonial.image}
+                  alt={testimonial.name}
+                  width={64}
+                  height={64}
+                  className="testimonial-img"
+                />
                 <div className="testimonial-card-content">
                   <p className="body-title-2">{testimonial.name}</p>
                 </div>
@@ -163,7 +89,7 @@ const Footer = () => {
       </div>
 
       <div className="footer-content">
-        <h6 className="blue h6 neon footer-title">👋 Thanks for stopping by!</h6>
+        <h6 className="blue h6 neon footer-title">Thanks for stopping by!</h6>
 
         <div className="footer-sections">
           <div className="footer-left">
@@ -176,10 +102,7 @@ const Footer = () => {
             <p className="body-2" style={{ marginBottom: '16px' }}>
               Feel free to fill out the reach out form, my response back time is 1-3 days
             </p>
-            <button 
-              onClick={openContactForm}
-              className="card-button body-2"
-            >
+            <button onClick={() => setIsFormOpen(true)} className="card-button body-2">
               Reach out form
               <span></span><span></span><span></span><span></span><span></span>
             </button>
@@ -194,7 +117,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <Form isOpen={isFormOpen} onClose={closeContactForm} />
+      <Form isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
     </section>
   );
 };
