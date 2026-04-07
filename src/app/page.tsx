@@ -11,6 +11,7 @@ import Cursor from '../components/Cursor';
 import Navbar from '../components/Navbar';
 import Background from '../components/themes/Background';
 import SectionOverlay from '../components/themes/SectionOverlay';
+import HomeOverlay from '../components/themes/HomeOverlay';
 
 const Orchestrator = dynamic(() => import('../components/themes/Orchestrator'), { ssr: false });
 
@@ -148,6 +149,9 @@ export default function Page() {
 
           {/* ── Scroll-driven section content overlay ── */}
           <SectionOverlay activeSection={activeSection} />
+
+          {/* ── Persistent Home text — always over wormhole ── */}
+          <HomeOverlay activeSection={activeSection} />
 
           {/* ── Navbar ── */}
           <Navbar
