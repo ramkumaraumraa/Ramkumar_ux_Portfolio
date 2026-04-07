@@ -2078,3 +2078,79 @@ body.scroll-locked {
   opacity: 1;
   pointer-events: auto;
 }
+
+/* ── Home 3D tunnel perspective ──────────────────────────── */
+.cinematic-hero {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-block {
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  pointer-events: none;
+  text-align: center;
+}
+
+/* ── Footer overlay tinted background ────────────────────── */
+.section-overlay--footer {
+  background: rgba(2, 2, 8, 0.55);
+}
+
+/* ── Testimonials 3D grid ────────────────────────────────── */
+.testimonials-3d-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  padding: 2rem 0;
+  width: 100%;
+}
+
+.testimonials-3d-grid .testimonial-card {
+  transform-style: preserve-3d;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  will-change: transform;
+}
+
+.testimonials-3d-grid .testimonial-card:nth-child(odd) {
+  transform: rotateX(4deg) rotateY(-3deg) translateZ(20px);
+}
+
+.testimonials-3d-grid .testimonial-card:nth-child(even) {
+  transform: rotateX(-4deg) rotateY(3deg) translateZ(8px);
+}
+
+.testimonials-3d-grid .testimonial-card:hover {
+  transform: rotateX(0deg) rotateY(0deg) translateZ(40px);
+}
+
+@media (max-width: 1024px) {
+  .testimonials-3d-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .testimonials-3d-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Footer content 3D depth ─────────────────────────────── */
+.footer-content {
+  perspective: 800px;
+}
+
+.footer-title {
+  transform: translateZ(10px);
+  display: inline-block;
+}
