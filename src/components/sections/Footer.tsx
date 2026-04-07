@@ -39,7 +39,7 @@ const testimonialsData: { name: string; role: string; description: string; image
   {
     name: 'JAYASHANKAR',
     role: 'Founder of Sachirva',
-    description: 'Ram is a very good team player with remarkable patience and skill. He took my e-learning startup idea from scratch, building the branding, design system, and complex product flows that enabled us to automate tests and deliver learning directly into students' hands.',
+    description: "Ram is a very good team player with remarkable patience and skill. He took my e-learning startup idea from scratch, building the branding, design system, and complex product flows that enabled us to automate tests and deliver learning directly into students' hands.",
     image: '/assets/imgs/Footer/Jayashankar.png',
   },
 ];
