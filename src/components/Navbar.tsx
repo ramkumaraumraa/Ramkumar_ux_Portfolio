@@ -86,9 +86,8 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () =
           end: '+=200',
           scrub: true,
         },
-        background: 'rgba(0, 14, 35, 0.85)',
-        backdropFilter: 'blur(12px)',
-        height: '56px',
+        background: 'rgba(6, 12, 24, 0.97)',
+        boxShadow: '0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,220,255,0.12)',
       });
     }
   }, []);
@@ -244,7 +243,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () =
               <li><a href="#process">Process</a></li>
             </ul>
 
-            <div className="contact-section" ref={dropdownRef}>
+<div className="contact-section" ref={dropdownRef}>
               <button 
                 ref={contactButtonRef}
                 className={`contact-glow-button ${dropdownVisible ? 'active' : ''}`}
@@ -311,10 +310,10 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () =
       )}
 
       {isMobile && (
-        <MobileBottomNav 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          openContactForm={openContactForm} 
+        <MobileBottomNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          openContactForm={openContactForm}
         />
       )}
 

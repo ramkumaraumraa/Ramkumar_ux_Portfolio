@@ -43,3 +43,19 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* Sticky section label — sits at top of each section and pins until scrolled past */
+.section-sticky-label {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  text-align: center;
+  padding: 10px 16px;
+  pointer-events: none;
+}
+
+/* Full-width variant for sections that use their own layout (About, Process, Footer) */
+.section-sticky-label--full {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+}

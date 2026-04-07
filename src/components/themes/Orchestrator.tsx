@@ -46,13 +46,16 @@ export default function Orchestrator({
   const rafRef = useRef<number | null>(null);
   const velocityBufferRef = useRef<number[]>([]);
   
-  const sectionRefs = useRef<Record<string, { top: number, bottom: number }>>({
-    home: { top: 0, bottom: 0 },
-    works: { top: 0, bottom: 0 },
-    about: { top: 0, bottom: 0 },
-    process: { top: 0, bottom: 0 },
-    footer: { top: 0, bottom: 0 }
-  });
+  const SECTION_THRESHOLDS = [0.18, 0.36, 0.54, 0.72] as const;
+  const SECTION_IDS = ['home', 'works', 'about', 'process', 'footer'] as const;
+
+  const updateSectionFromProgress = (progress: number) => {
+    let section: string = 'home';
+    for (let i = 0; i < SECTION_THRESHOLDS.length; i++) {
+      if (progress >= SECTION_THRESHOLDS[i]) section = SECTION_IDS[i + 1];
+    }
+    setCurrentSection(section);
+  };
 
   const updateVelocityBuffer = (v: number) => {
     velocityBufferRef.current.push(v);
@@ -61,52 +64,6 @@ export default function Orchestrator({
     return sum / velocityBufferRef.current.length;
   };
 
-  useEffect(() => {
-    const measureSections = () => {
-      const sections = ['home', 'works', 'about', 'process', 'footer'];
-      
-      sections.forEach(section => {
-        const el = document.getElementById(section === 'home' ? 'hero' : section);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          sectionRefs.current[section] = {
-            top: rect.top + window.scrollY,
-            bottom: rect.bottom + window.scrollY
-          };
-        }
-      });
-    };
-    
-    measureSections();
-    window.addEventListener('resize', measureSections);
-    window.addEventListener('load', measureSections);
-    
-    setTimeout(measureSections, 1000);
-    
-    return () => {
-      window.removeEventListener('resize', measureSections);
-      window.removeEventListener('load', measureSections);
-    };
-  }, []);
-
-  const updateSectionState = (scrollY: number) => {
-    const sections = sectionRefs.current;
-    let newSection = 'home';
-    
-    if (scrollY >= sections.footer.top) {
-      newSection = 'footer';
-    } else if (scrollY >= sections.process.top) {
-      newSection = 'process';
-    } else if (scrollY >= sections.about.top) {
-      newSection = 'about';
-    } else if (scrollY >= sections.works.top) {
-      newSection = 'works';
-    } else {
-      newSection = 'home';
-    }
-    
-    setCurrentSection(newSection);
-  };
 
   useEffect(() => {
     if (!lenis) return;
@@ -116,9 +73,8 @@ export default function Orchestrator({
       lastScrollTime.current = now;
 
       const smoothVelocity = updateVelocityBuffer(e.velocity || 0);
-      const y = typeof e.scroll === 'number' ? e.scroll : window.scrollY;
 
-      updateSectionState(y);
+      updateSectionFromProgress(e.progress || 0);
 
       setScrollData({
         velocity: smoothVelocity,
@@ -154,7 +110,8 @@ export default function Orchestrator({
       const raw = currentScrollY - lastScrollY;
       lastScrollY = currentScrollY;
 
-      updateSectionState(currentScrollY);
+      const maxScroll = (document.body.scrollHeight - window.innerHeight) || 1;
+      updateSectionFromProgress(currentScrollY / maxScroll);
 
       const smooth = updateVelocityBuffer(raw);
 
@@ -221,7 +178,7 @@ export default function Orchestrator({
 
   if (responsive.isMobile) {
     return (
-      <div 
+      <div
         className="mobile-background-container"
         style={{
           position: 'fixed',
@@ -233,7 +190,7 @@ export default function Orchestrator({
           zIndex: -1,
         }}
       >
-        <Background onReady={handleBackgroundReady} />
+        <Background onReady={handleBackgroundReady} currentSection={currentSection} />
       </div>
     );
   }
@@ -253,8 +210,8 @@ export default function Orchestrator({
         transition: 'opacity 0.6s ease-out'
       }}
     >
-      <Background onReady={handleBackgroundReady} />
-      
+      <Background onReady={handleBackgroundReady} currentSection={currentSection} />
+
       {backgroundReady && (
         <Canvas
           ref={canvasRef}

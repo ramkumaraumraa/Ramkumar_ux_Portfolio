@@ -204,45 +204,61 @@ html.lenis, html.lenis body {
    NAVBAR STYLES WITH CORRECTED GLOW EFFECT
    ======================================== */
 
-/* Main Navbar */
+/* Main Navbar — floating bottom pill */
 .navbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  gap: 4px;
+  background: rgba(6, 12, 24, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 72px;
-  padding: 0 32px;
+  bottom: 28px;
+  top: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: calc(100vw - 48px);
+  height: 52px;
+  padding: 0 8px 0 20px;
   box-sizing: border-box;
   z-index: 1000;
-  transition: all 0.3s ease;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 220, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition: box-shadow 0.3s ease, background 0.3s ease;
 }
 
+/* Gradient top-edge shimmer on the pill */
 .navbar::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+  top: 0;
+  left: 20%;
+  width: 60%;
   height: 1px;
-  background: linear-gradient(90deg, 
+  border-radius: 1px;
+  background: linear-gradient(90deg,
     transparent,
-    rgba(0, 255, 255, 0.5),
-    rgba(0, 162, 255, 0.5),
-    rgba(183, 0, 255, 0.5),
+    rgba(0, 255, 255, 0.45),
+    rgba(0, 162, 255, 0.45),
+    rgba(183, 0, 255, 0.45),
     transparent
   );
+  pointer-events: none;
 }
 
 /* Logo Section */
 .logo-section {
   display: flex;
   align-items: center;
+  padding-right: 16px;
+  margin-right: 4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo-link {
@@ -269,7 +285,7 @@ html.lenis, html.lenis body {
 
 .logo-text {
   font-family: 'varino', 'Arial Black', sans-serif;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: bold;
   color: #ffffff;
   letter-spacing: 0.5px;
@@ -288,7 +304,7 @@ html.lenis, html.lenis body {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 8px;
   height: 100%;
 }
 
@@ -302,13 +318,13 @@ html.lenis, html.lenis body {
 }
 
 .nav-list-right li {
-  padding: 0 16px;
+  padding: 0 10px;
 }
 
 .nav-list-right a {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   transition: all 0.3s ease;
   position: relative;
@@ -472,7 +488,8 @@ html.lenis, html.lenis body {
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 16px);
+  bottom: calc(100% + 16px);
+  top: auto;
   right: -20px;
   background: linear-gradient(135deg,
     rgba(24, 31, 38, 0.95),
@@ -655,8 +672,7 @@ html.lenis, html.lenis body {
 
 @media (max-width: 1024px) {
   .navbar {
-    height: 64px;
-    padding: 0 40px;
+    display: none;
   }
 
   .logo-image {

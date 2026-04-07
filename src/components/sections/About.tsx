@@ -47,7 +47,7 @@ const About = () => {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    if (!aboutRef.current) return;
+    if (!aboutRef.current || !mounted) return;
 
     gsapContextRef.current = gsap.context(() => {
       // Use small pixel offsets instead of xPercent to avoid large shifts
@@ -129,7 +129,7 @@ const About = () => {
         gsapContextRef.current = null;
       }
     };
-  }, []);
+  }, [mounted]);
 
   const [statProps, setStatProps] = useSpring(() => ({
     scale: 1,

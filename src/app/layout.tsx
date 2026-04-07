@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { Lexend_Deca } from "next/font/google";
+import { Lexend_Deca, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const lexendDeca = Lexend_Deca({
   variable: "--font-lexend-deca",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -23,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={lexendDeca.variable}>
+    <html lang="en" className={`${lexendDeca.variable} ${jetbrainsMono.variable}`}>
       <head>
         <link rel="stylesheet" href="https://use.typekit.net/pwm3hft.css" />
       </head>

@@ -132,7 +132,7 @@ const Footer = () => {
   return (
     <section id="footer" className="footer-testimonials-section" ref={sectionRef}>
       <div className="testimonials-content" ref={testimonialsRef}>
-        <h5 className="turquoise h5 neon" style={{ color: '#fff', marginTop: '24px' }}>TESTIMONIALS</h5>
+        <h5 className="turquoise h5 neon section-sticky-label section-sticky-label--full" style={{ marginTop: '24px' }}>TESTIMONIALS</h5>
         <div className="testimonials-grid">
           {testimonialsData.map((testimonial, index) => (
             <div key={`testimonial-${index}`} className="testimonial-card" style={{ display: 'flex', opacity: 1, visibility: 'visible' }}>

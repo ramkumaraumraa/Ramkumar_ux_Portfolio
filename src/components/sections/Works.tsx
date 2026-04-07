@@ -50,11 +50,11 @@ const Works = () => {
 
   // Desktop Positions (Wide X spread)
   const fannedPositions = [
-    { xPercent: -130, yPercent: -10, rotate: -15, scale: 0.85, zIndex: 1 },
-    { xPercent: -65,  yPercent: 15,  rotate: -7,  scale: 0.95, zIndex: 2 },
+    { xPercent: -170, yPercent: -10, rotate: -15, scale: 0.88, zIndex: 1 },
+    { xPercent: -85,  yPercent: 15,  rotate: -7,  scale: 0.95, zIndex: 2 },
     { xPercent: 0,    yPercent: 0,   rotate: 0,   scale: 1,    zIndex: 5 },
-    { xPercent: 65,   yPercent: -15, rotate: 7,   scale: 0.95, zIndex: 3 },
-    { xPercent: 130,  yPercent: 10,  rotate: 15,  scale: 0.85, zIndex: 4 },
+    { xPercent: 85,   yPercent: -15, rotate: 7,   scale: 0.95, zIndex: 3 },
+    { xPercent: 170,  yPercent: 10,  rotate: 15,  scale: 0.88, zIndex: 4 },
   ];
 
   // Tablet Positions (Tighter X-spread for 768-1024px)
@@ -201,19 +201,17 @@ const Works = () => {
   };
 
   return (
-    <section 
-      id="works" 
-      className="relative w-full min-h-[100vh] py-24 flex flex-col items-center justify-center overflow-hidden" 
-      ref={sectionRef}
-    >
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 text-center z-10 w-full px-4">
-        <h2 className="text-turquoise text-xs md:text-sm uppercase tracking-[0.3em] font-medium text-emerald-400">
-          SELECTED WORKS
-        </h2>
+    <div id="works" className="relative">
+      <div className="section-sticky-label">
+        <h5 className="turquoise h5 neon">SELECTED WORKS</h5>
       </div>
 
-      <div 
-        className="relative w-full max-w-7xl mx-auto h-[600px] md:h-[600px] flex items-center justify-center mt-32 md:mt-24" 
+      <section
+        className="relative w-full min-h-[100vh] pt-8 pb-16 flex flex-col items-center justify-start overflow-hidden"
+        ref={sectionRef}
+      >
+      <div
+        className="relative w-full h-[75vh] flex items-center justify-center"
         ref={containerRef}
       >
         {cardData.map((card, index) => (
@@ -272,7 +270,8 @@ const Works = () => {
           </div>
         ))}
       </div>
-    </section>
+      </section>
+    </div>
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, Suspense } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -9,77 +9,68 @@ import Lenis from 'lenis';
 import Loader from '../components/Loader';
 import Cursor from '../components/Cursor';
 import Navbar from '../components/Navbar';
-import SocialSidebar from '../components/StickySidebar';
 import Background from '../components/themes/Background';
+import SectionOverlay from '../components/themes/SectionOverlay';
 
-// Dynamically import heavy WebGL component
 const Orchestrator = dynamic(() => import('../components/themes/Orchestrator'), { ssr: false });
 
-const HomeSection = dynamic(() => import('../components/sections/Home'), { ssr: false });
-const WorksSection = dynamic(() => import('../components/sections/Works'), { ssr: false });
-const AboutSection = dynamic(() => import('../components/sections/About'), { ssr: false });
-const ProcessSection = dynamic(() => import('../components/sections/Process'), { ssr: false });
-const FooterSection = dynamic(() => import('../components/sections/Footer'), { ssr: false });
+const PROXY_HEIGHT = 18_000;
+const SECTION_THRESHOLDS = [0.18, 0.36, 0.54, 0.72] as const;
+const SECTION_IDS = ['home', 'works', 'about', 'process', 'footer'] as const;
 
-export default function Home() {
-  const [activeTab, setActiveTab] = useState('home');
-  const [loaderComplete, setLoaderComplete] = useState(false);
+export default function Page() {
+  const [loaderComplete, setLoaderComplete]   = useState(false);
   const [backgroundReady, setBackgroundReady] = useState(false);
-  const [preparingExit, setPreparingExit] = useState(false);
+  const [preparingExit, setPreparingExit]     = useState(false);
+  const [activeSection, setActiveSection]     = useState('home');
   const lenisRef = useRef<any>(null);
-  const [responsive, setResponsive] = useState({
-    isMobile: false,
-    isTablet: false
-  });
+  const [responsive, setResponsive] = useState({ isMobile: false, isTablet: false });
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
-    
-    setResponsive({
+    const check = () => setResponsive({
       isMobile: window.innerWidth < 768,
-      isTablet: window.innerWidth < 1024
+      isTablet: window.innerWidth < 1024,
     });
-
-    const handleResize = () => {
-      setResponsive({
-        isMobile: window.innerWidth < 768,
-        isTablet: window.innerWidth < 1024
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
 
+  /* Preload WebGL before loader exits */
   useEffect(() => {
-    const handleLoaderExiting = () => {
-      setPreparingExit(true);
-    };
-
-    window.addEventListener('loader-exiting', handleLoaderExiting);
-    return () => window.removeEventListener('loader-exiting', handleLoaderExiting);
+    const onExit = () => setPreparingExit(true);
+    window.addEventListener('loader-exiting', onExit);
+    return () => window.removeEventListener('loader-exiting', onExit);
   }, []);
 
+  /* Lenis smooth scroll */
   useEffect(() => {
     if (!loaderComplete) return;
 
     const lenis = new Lenis({
-      duration: 1.2,
+      duration: 1.4,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2
+      wheelMultiplier: 1.4,
+      touchMultiplier: 2.5,
     });
 
     lenisRef.current = lenis;
-
     lenis.on('scroll', ScrollTrigger.update);
 
-    const raf = (time: number) => {
-      lenis.raf(time * 1000);
-    };
-    
+    /* Scroll-band section detection */
+    lenis.on('scroll', ({ scroll }: { scroll: number }) => {
+      const progress = scroll / PROXY_HEIGHT;
+      let section: string = 'home';
+      for (let i = 0; i < SECTION_THRESHOLDS.length; i++) {
+        if (progress >= SECTION_THRESHOLDS[i]) section = SECTION_IDS[i + 1];
+      }
+      setActiveSection(section);
+    });
+
+    const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
@@ -90,18 +81,13 @@ export default function Home() {
   }, [loaderComplete]);
 
   useEffect(() => {
-    if (backgroundReady) {
-      (window as any).backgroundReady = true;
-    }
+    if (backgroundReady) (window as any).backgroundReady = true;
   }, [backgroundReady]);
 
   const handleLoaderComplete = () => {
     gsap.to('.loader', {
-      opacity: 0,
-      duration: 0.5,
-      onComplete: () => {
-        setLoaderComplete(true);
-      }
+      opacity: 0, duration: 0.5,
+      onComplete: () => setLoaderComplete(true),
     });
   };
 
@@ -109,16 +95,12 @@ export default function Home() {
     <>
       {!loaderComplete && <Loader onComplete={handleLoaderComplete} />}
 
+      {/* Preload WebGL while loader is still showing */}
       {preparingExit && !loaderComplete && (
-        <div style={{ 
-          position: 'fixed', 
-          opacity: 0, 
-          pointerEvents: 'none',
-          zIndex: -1 
-        }}>
-          <Background onReady={() => setBackgroundReady(true)} />
+        <div style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
+          <Background onReady={() => setBackgroundReady(true)} currentSection={activeSection} />
           <div className="Background-Animation">
-            <Orchestrator 
+            <Orchestrator
               lenis={lenisRef.current}
               responsive={responsive}
               intensity={0.1}
@@ -134,68 +116,47 @@ export default function Home() {
       )}
 
       {loaderComplete && (
-        <>
-          <div style={{
-            animation: 'fadeIn 1s ease-out',
-            opacity: 1
-          }}>
-            <Background />
-            
-            <div className="Background-Animation">
-              <Orchestrator 
-                lenis={lenisRef.current}
-                responsive={responsive}
-                intensity={1}
-                enabled={true}
-                idleThresholdMs={700}
-                fadeLerpSpeed={0.05}
-                zoomAmount={1.12}
-                modelOffset={2}
-                enableMouse={true}
-              />
-            </div>
+        <div style={{ animation: 'fadeIn 1s ease-out' }}>
+          {/* Scroll proxy — gives the page its scrollable height */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: 0, left: 0,
+              width: '1px',
+              height: `${PROXY_HEIGHT}px`,
+              pointerEvents: 'none',
+              zIndex: -1,
+            }}
+          />
+
+          {/* ── WebGL wormhole background ── */}
+          <Background currentSection={activeSection} />
+          <div className="Background-Animation">
+            <Orchestrator
+              lenis={lenisRef.current}
+              responsive={responsive}
+              intensity={1}
+              enabled={true}
+              idleThresholdMs={700}
+              fadeLerpSpeed={0.05}
+              zoomAmount={1.12}
+              modelOffset={2}
+              enableMouse={true}
+            />
           </div>
-          
-          <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
-          <SocialSidebar />
 
-          <main style={{
-            animation: 'slideUp 1s ease-out',
-            opacity: 1
-          }}>
-            {(!responsive.isMobile || activeTab === 'home') && (
-              <Suspense fallback={<div className="section-loader">Loading...</div>}>
-                <HomeSection />
-              </Suspense>
-            )}
+          {/* ── Scroll-driven section content overlay ── */}
+          <SectionOverlay activeSection={activeSection} />
 
-            {(!responsive.isMobile || activeTab === 'works') && (
-              <Suspense fallback={<div className="section-loader">Loading...</div>}>
-                <WorksSection />
-              </Suspense>
-            )}
-
-            {(!responsive.isMobile || activeTab === 'about') && (
-              <Suspense fallback={<div className="section-loader">Loading...</div>}>
-                <AboutSection />
-              </Suspense>
-            )}
-
-            {(!responsive.isMobile || activeTab === 'process') && (
-              <Suspense fallback={<div className="section-loader">Loading...</div>}>
-                <ProcessSection />
-              </Suspense>
-            )}
-
-            {(!responsive.isMobile || activeTab === 'contact') && (
-              <Suspense fallback={<div className="section-loader">Loading...</div>}>
-                <FooterSection />
-              </Suspense>
-            )}
-          </main>
+          {/* ── Navbar ── */}
+          <Navbar
+            activeTab={activeSection}
+            setActiveTab={setActiveSection}
+          />
 
           <Cursor />
-        </>
+        </div>
       )}
     </>
   );

@@ -1688,6 +1688,12 @@ body.scroll-locked {
   max-width: 1200px;
 }
 
+@media (min-width: 1025px) {
+  .footer-bottom {
+    padding-bottom: 96px;
+  }
+}
+
 .footer-bottom-row {
   display: flex;
   justify-content: space-between;
@@ -1927,20 +1933,6 @@ body.scroll-locked {
   filter: drop-shadow(0 0 5px rgba(0, 220, 255, 0.6));
 }
 
-/* ── Logo/Image icon for Home tab ── */
-.nav-icon img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  transition: filter 0.25s ease, opacity 0.25s ease;
-  opacity: 0.45;
-}
-
-.nav-item.active .nav-icon img {
-  opacity: 1;
-  filter: drop-shadow(0 0 5px rgba(246, 174, 45, 0.7));
-}
-
 /* ── Label ── */
 .nav-label {
   font-size: 10px;
@@ -2067,4 +2059,22 @@ body.scroll-locked {
 .fab-item:hover img,
 .fab-item:active img {
   filter: brightness(1.2);
+}
+
+
+/* ── Section Overlay ──────────────────────────────────────── */
+.section-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.55s ease;
+  background: transparent;
+}
+
+.section-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
 }

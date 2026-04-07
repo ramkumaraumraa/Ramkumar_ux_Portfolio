@@ -5,13 +5,14 @@ import * as THREE from 'three';
 
 interface BackgroundProps {
   onReady?: () => void;
+  currentSection?: string;
 }
 
-const Background = ({ onReady }: BackgroundProps) => {
+const Background = ({ onReady, currentSection: currentSectionProp }: BackgroundProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isLowPerf, setIsLowPerf] = useState(false);
-  const [currentSection, setCurrentSection] = useState('home');
+  const currentSection = currentSectionProp ?? 'home';
   const [visibleComets, setVisibleComets] = useState<any[]>([]);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
 
@@ -72,53 +73,6 @@ const Background = ({ onReady }: BackgroundProps) => {
     });
   }, [currentSection, sectionComets]);
 
-  useEffect(() => {
-    let rafId: number | null = null;
-    let lastScrollY = window.scrollY;
-    
-    const handleScroll = () => {
-      if (rafId) return;
-      
-      rafId = requestAnimationFrame(() => {
-        const scrollTop = window.scrollY;
-        const maxScroll = document.body.scrollHeight - window.innerHeight;
-        const scrollProgress = scrollTop / maxScroll;
-        
-        if (Math.abs(scrollTop - lastScrollY) > 10) {
-          const scrollLevel = Math.floor(scrollProgress * 5);
-          document.body.setAttribute('data-scroll-level', scrollLevel.toString());
-          lastScrollY = scrollTop;
-        }
-        
-        const sections = ['home', 'works', 'about', 'process', 'footer'];
-        let newSection = 'home';
-        
-        for (const section of sections) {
-          const el = document.getElementById(section === 'home' ? 'hero' : section);
-          if (el) {
-            const rect = el.getBoundingClientRect();
-            if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-              newSection = section;
-              break;
-            }
-          }
-        }
-        
-        if (newSection !== currentSection) {
-          setCurrentSection(newSection);
-        }
-        
-        rafId = null;
-      });
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [currentSection]);
 
   useEffect(() => {
     if (isReducedMotion) {

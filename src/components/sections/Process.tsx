@@ -130,7 +130,7 @@ const Process = () => {
 
   return (
     <section id="process" className="process-section" ref={sectionRef}>
-      <div className="process-header">
+      <div className="process-header section-sticky-label section-sticky-label--full">
         <h5 className="pink h6 neon">Evolving Non-Linear Process</h5>
       </div>
 
