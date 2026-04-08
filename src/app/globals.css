@@ -38,8 +38,13 @@
   }
 }
 
+html {
+  /* Deep space fallback — shows if nebula hasn't loaded yet */
+  background: #020208;
+}
+
 body {
-  background: var(--background);
+  background: transparent; /* Let #nebula-bg show through */
   color: var(--foreground);
   font-family: var(--font-sans);
 }

@@ -3,7 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 const Works = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -82,8 +82,9 @@ const Works = () => {
     return fannedPositions;
   };
 
+  const localProgress = useSectionProgress(1); // Works is index 1
+
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
     if (!sectionRef.current) return;
 
     // Initial strict centering setup
@@ -99,56 +100,31 @@ const Works = () => {
       force3D: true
     });
 
-    let mm = gsap.matchMedia();
+    const positions = getPositions();
+    const tl = gsap.timeline({ paused: true });
 
-    // Responsive setup
-    mm.add({
-      isDesktop: "(min-width: 1025px)",
-      isTablet: "(min-width: 769px) and (max-width: 1024px)",
-      isMobile: "(max-width: 768px)"
-    }, (context) => {
-      let { isTablet, isMobile } = context.conditions as any;
-      let positions = isMobile ? mobilePositions : isTablet ? tabletPositions : fannedPositions;
-
-      ScrollTrigger.create({
-        trigger: sectionRef.current,
-        start: 'top 50%',
-        onEnter: () => {
-          cardRefs.current.forEach((card, i) => {
-            gsap.to(card, {
-              xPercent: positions[i].xPercent - 50, // Accounts for -50 starting offset
-              yPercent: positions[i].yPercent - 50,
-              rotation: positions[i].rotate,
-              scale: positions[i].scale,
-              opacity: 1,
-              zIndex: positions[i].zIndex,
-              duration: 1.4,
-              ease: 'expo.out',
-              delay: i * 0.1,
-              force3D: true,
-              overwrite: 'auto'
-            });
-          });
-        },
-        onLeaveBack: () => {
-          gsap.to(cardRefs.current, {
-            xPercent: -50,
-            yPercent: -50,
-            rotation: 0,
-            scale: 0.5,
-            opacity: 0,
-            duration: 1,
-            ease: 'power3.inOut',
-            overwrite: 'auto'
-          });
-        }
-      });
+    cardRefs.current.forEach((card, i) => {
+      if (!card) return;
+      tl.to(card, {
+        xPercent: positions[i].xPercent - 50,
+        yPercent: positions[i].yPercent - 50,
+        rotation: positions[i].rotate,
+        scale: positions[i].scale,
+        opacity: 1,
+        zIndex: positions[i].zIndex,
+        ease: 'power2.out',
+        duration: 1, // Timeline relative duration
+        force3D: true
+      }, i * 0.05); // slight stagger in the timeline
     });
 
+    // Drive timeline progress by local scroll progress
+    tl.progress(localProgress);
+
     return () => {
-      mm.revert(); // clean up matchMedia
+      tl.kill();
     };
-  }, []);
+  }, [localProgress]);
 
   const handleMouseEnter = (index: number) => {
     const card = cardRefs.current[index];

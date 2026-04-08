@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+import { gsap } from 'gsap';
+import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 import Form from '../Form';
 
@@ -47,6 +49,8 @@ const testimonialsData: { name: string; role: string; description: string; image
 const Footer = () => {
   const [localTime, setLocalTime] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const footerRef = useRef<HTMLElement>(null);
+  const localProgress = useSectionProgress(4); // Footer is index 4
 
   useEffect(() => {
     const updateTime = () => {
@@ -60,8 +64,45 @@ const Footer = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!footerRef.current) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ paused: true });
+
+      tl.fromTo('.testimonial-card', { 
+        opacity: 0, 
+        y: 40,
+        scale: 0.9,
+        rotation: (i) => (i % 2 === 0 ? -2 : 2)
+      }, { 
+        opacity: 1, 
+        y: 0, 
+        scale: 1,
+        rotation: 0,
+        stagger: 0.05,
+        duration: 1, 
+        ease: 'power2.out' 
+      }, 0);
+
+      tl.fromTo('.footer-content', { 
+        opacity: 0, 
+        y: 60 
+      }, { 
+        opacity: 1, 
+        y: 0, 
+        duration: 0.8, 
+        ease: 'power2.out' 
+      }, 0.5);
+
+      tl.progress(localProgress);
+    }, footerRef);
+
+    return () => ctx.revert();
+  }, [localProgress]);
+
   return (
-    <section id="footer" className="footer-testimonials-section">
+    <section ref={footerRef} id="footer" className="footer-testimonials-section">
       <div className="testimonials-content">
         <h5 className="turquoise h5 neon section-sticky-label section-sticky-label--full" style={{ marginTop: '24px' }}>
           TESTIMONIALS

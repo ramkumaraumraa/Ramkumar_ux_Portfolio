@@ -2,9 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { useSpring, animated } from '@react-spring/web';
+import { useSectionProgress } from '@/hooks/useSectionProgress';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 const About = () => {
   const aboutRef = useRef<HTMLElement>(null);
@@ -44,100 +43,37 @@ const About = () => {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+  const localProgress = useSectionProgress(2); // About is index 2
 
+  useEffect(() => {
     if (!aboutRef.current || !mounted) return;
 
     gsapContextRef.current = gsap.context(() => {
-      // Use small pixel offsets instead of xPercent to avoid large shifts
-      // when the section height exceeds 100vh
-      gsap.fromTo(
-        '.about-left',
-        { scale: 0.95, opacity: 0, x: -24 },
-        {
-          scale: 1,
-          opacity: 1,
-          x: 0,
-          ease: 'power2.out',
-          duration: 1.4,
-          scrollTrigger: {
-            trigger: aboutRef.current,
-            start: 'top 80%',
-            toggleActions: 'play reverse play reverse',
-          },
-        }
-      );
+      const tl = gsap.timeline({ paused: true });
 
-      gsap.fromTo(
-        '.about-right',
-        { scale: 0.95, opacity: 0, x: 24 },
-        {
-          scale: 1,
-          opacity: 1,
-          x: 0,
-          ease: 'power2.out',
-          duration: 1.4,
-          scrollTrigger: {
-            trigger: aboutRef.current,
-            start: 'top 80%',
-            toggleActions: 'play reverse play reverse',
-          },
-        }
-      );
+      // Build the reveal timeline
+      tl.fromTo('.about-left', { scale: 0.95, opacity: 0, x: -24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
+      tl.fromTo('.about-right', { scale: 0.95, opacity: 0, x: 24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
+      tl.fromTo('.stat-item', { scale: 0.8, opacity: 0, y: 20 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.8, stagger: 0.1 }, 0.2);
+      tl.fromTo('.expertise-item', { scale: 0.9, opacity: 0, y: 16 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.6, stagger: 0.05 }, 0.4);
 
-      gsap.fromTo(
-        '.stat-item',
-        { scale: 0.8, opacity: 0, y: 20 },
-        {
-          scale: 1,
-          opacity: 1,
-          y: 0,
-          ease: 'power2.out',
-          duration: 1.2,
-          stagger: 0.15,
-          scrollTrigger: {
-            trigger: '.about-stats',
-            start: 'top 90%',
-            toggleActions: 'play none none reverse',
-          },
-        }
-      );
-
-      gsap.fromTo(
-        '.expertise-item',
-        { scale: 0.9, opacity: 0, y: 16 },
-        {
-          scale: 1,
-          opacity: 1,
-          y: 0,
-          ease: 'power2.out',
-          duration: 0.9,
-          stagger: 0.08,
-          scrollTrigger: {
-            trigger: '.expertise-grid',
-            start: 'top 90%',
-            toggleActions: 'play none none reverse',
-          },
-        }
-      );
+      // Sync timeline with scroll progress
+      tl.progress(localProgress);
     }, aboutRef);
 
     return () => {
       if (gsapContextRef.current) {
         gsapContextRef.current.revert();
-        gsapContextRef.current = null;
       }
     };
-  }, [mounted]);
+  }, [mounted, localProgress]);
 
-  const [statProps, setStatProps] = useSpring(() => ({
-    scale: 1,
-    config: { tension: 250, friction: 15 },
-  }));
-
-  const handleStatMouseEnter = () => setStatProps({ scale: 1.05 });
-  const handleStatMouseLeave = () => setStatProps({ scale: 1 });
+  const handleStatMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.to(e.currentTarget, { scale: 1.05, duration: 0.3, ease: 'back.out(2)' });
+  };
+  const handleStatMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.to(e.currentTarget, { scale: 1, duration: 0.3, ease: 'power2.out' });
+  };
 
   const handleExpertiseMouseMove = (e: React.MouseEvent) => {
     const viewportWidth = window.innerWidth;
@@ -255,35 +191,32 @@ const About = () => {
         </div>
 
         <div className="about-stats">
-          <animated.div
+          <div
             className="stat-item"
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
-            style={statProps}
           >
             <h5 className="pink h5 neon">25+</h5>
             <p className="caption-text-label">PRODUCTS DESIGNED</p>
-          </animated.div>
+          </div>
 
-          <animated.div
+          <div
             className="stat-item"
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
-            style={statProps}
           >
             <h5 className="pink h5 neon">100+</h5>
             <p className="caption-text-label">FEATURES DEVELOPED</p>
-          </animated.div>
+          </div>
 
-          <animated.div
+          <div
             className="stat-item"
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
-            style={statProps}
           >
             <h5 className="pink h5 neon">500+</h5>
             <p className="caption-text-label">RESEARCH ORCHESTRATED</p>
-          </animated.div>
+          </div>
         </div>
 
         <div className="expertise-section">

@@ -5,7 +5,9 @@ import { Canvas } from '@react-three/fiber';
 import { Preload } from '@react-three/drei';
 import * as THREE from 'three';
 import HomeTheme from './Home_theme';
-import Background from './Background';
+import CameraRig from './CameraRig';
+import { Scenes } from './Scenes';
+import { ScenePostProcessing } from './ScenePostProcessing';
 
 interface OrchestratorProps {
   lenis?: any;
@@ -17,9 +19,10 @@ interface OrchestratorProps {
   enableMouse?: boolean;
   zoomAmount?: number;
   modelOffset?: number;
+  scrollProgressRef?: React.MutableRefObject<number>;
 }
 
-export default function Orchestrator({ 
+export default function Orchestrator({
   lenis,
   responsive = {},
   enabled = true,
@@ -27,7 +30,8 @@ export default function Orchestrator({
   idleThresholdMs = 700,
   fadeLerpSpeed = 0.05,
   enableMouse = true,
-  ...props 
+  scrollProgressRef: externalScrollProgressRef,
+  ...props
 }: OrchestratorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scrollData, setScrollData] = useState({
@@ -45,6 +49,9 @@ export default function Orchestrator({
   const lastScrollTime = useRef(Date.now());
   const rafRef = useRef<number | null>(null);
   const velocityBufferRef = useRef<number[]>([]);
+  const intensityRef = useRef(intensity);
+  const internalScrollProgressRef = useRef(0);
+  const scrollProgressRef = externalScrollProgressRef ?? internalScrollProgressRef;
   
   const SECTION_THRESHOLDS = [0.18, 0.36, 0.54, 0.72] as const;
   const SECTION_IDS = ['home', 'works', 'about', 'process', 'footer'] as const;
@@ -100,60 +107,6 @@ export default function Orchestrator({
     };
   }, [lenis, idleThresholdMs]);
 
-  useEffect(() => {
-    if (lenis) return;
-
-    let lastScrollY = window.scrollY;
-
-    const calculateVelocity = () => {
-      const currentScrollY = window.scrollY;
-      const raw = currentScrollY - lastScrollY;
-      lastScrollY = currentScrollY;
-
-      const maxScroll = (document.body.scrollHeight - window.innerHeight) || 1;
-      updateSectionFromProgress(currentScrollY / maxScroll);
-
-      const smooth = updateVelocityBuffer(raw);
-
-      setScrollData(prev => ({
-        ...prev,
-        velocity: smooth * 0.5,
-        direction: raw > 0 ? 1 : raw < 0 ? -1 : 0,
-        progress: (document.body.scrollHeight - window.innerHeight) > 0
-          ? currentScrollY / (document.body.scrollHeight - window.innerHeight)
-          : 0
-      }));
-
-      rafRef.current = requestAnimationFrame(calculateVelocity);
-    };
-
-    const handleScroll = () => {
-      lastScrollTime.current = Date.now();
-      setIsIdle(false);
-      setScrollData(prev => ({ ...prev, isScrolling: true }));
-
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = setTimeout(() => {
-        setIsIdle(true);
-        setScrollData(prev => ({ ...prev, isScrolling: false, velocity: 0 }));
-      }, idleThresholdMs);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('wheel', handleScroll, { passive: true });
-    window.addEventListener('touchmove', handleScroll, { passive: true });
-
-    rafRef.current = requestAnimationFrame(calculateVelocity);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('wheel', handleScroll);
-      window.removeEventListener('touchmove', handleScroll);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    };
-  }, [lenis, idleThresholdMs]);
-
   const handleBackgroundReady = () => {
     setBackgroundReady(true);
   };
@@ -176,23 +129,10 @@ export default function Orchestrator({
 
   if (!enabled) return null;
 
+  if (!backgroundReady) return null; // Orchestrator depends on Background.tsx's Assets
+
   if (responsive.isMobile) {
-    return (
-      <div
-        className="mobile-background-container"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: -1,
-        }}
-      >
-        <Background onReady={handleBackgroundReady} currentSection={currentSection} />
-      </div>
-    );
+    return null; // The background/overlays are handled in page.tsx for mobile
   }
 
   return (
@@ -210,16 +150,16 @@ export default function Orchestrator({
         transition: 'opacity 0.6s ease-out'
       }}
     >
-      <Background onReady={handleBackgroundReady} currentSection={currentSection} />
+      {/* Background is now rendered at the root level in page.tsx */}
 
       {backgroundReady && (
         <Canvas
           ref={canvasRef}
-          camera={{ 
-            position: [0, 0, 5], 
+          camera={{
+            position: [0, 0, 0],
             fov: 75,
             near: 0.1,
-            far: 100
+            far: 200
           }}
           gl={{
             alpha: true,
@@ -238,15 +178,24 @@ export default function Orchestrator({
           }}
         >
           <Suspense fallback={null}>
-            <HomeTheme 
-              intensity={intensity} 
+            <HomeTheme
+              intensityRef={intensityRef}
               responsive={responsive}
               transitionsEnabled={false}
               scrollData={scrollData}
               isIdle={isIdle}
               currentSection={currentSection}
             />
-            
+
+            <CameraRig
+              scrollProgressRef={scrollProgressRef}
+              intensityRef={intensityRef}
+            />
+
+            <Scenes scrollProgressRef={scrollProgressRef} />
+
+            <ScenePostProcessing />
+
             <Preload all />
           </Suspense>
         </Canvas>

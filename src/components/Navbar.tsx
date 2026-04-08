@@ -182,7 +182,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () =
 
   const toggleMobileMenu = () => {
     setMenuOpen(!menuOpen);
-    document.body.style.overflow = menuOpen ? 'auto' : 'hidden';
+    // document.body.style.overflow = menuOpen ? 'auto' : 'hidden'; // Removed for virtual scroll compatibility
     
     const timeline = gsap.timeline();
     if (!menuOpen) {
@@ -205,7 +205,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () =
 
   const scrollToHome = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setActiveTab('home');
   };
 
   const openContactForm = () => {
@@ -229,18 +229,18 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () =
       {!isMobile && (
         <nav className="navbar">
           <div className="logo-section">
-            <a href="#home" onClick={scrollToHome} className="logo-link">
+            <button onClick={() => setActiveTab('home')} className="logo-link appearance-none bg-transparent border-none cursor-pointer">
               <img src={Logo} alt="Logo" className="logo-image" />
               <span className="logo-text">Ramkumar</span>
-            </a>
+            </button>
           </div>
 
         {!isMobile && (
           <div className="nav-right">
             <ul className="nav-list-right body-2">
-              <li><a href="#works">Works</a></li>
-              <li><a href="#about">About</a></li>
-              <li><a href="#process">Process</a></li>
+              <li><button onClick={() => setActiveTab('works')} className="nav-link body-2 appearance-none bg-transparent border-none cursor-pointer">Works</button></li>
+              <li><button onClick={() => setActiveTab('about')} className="nav-link body-2 appearance-none bg-transparent border-none cursor-pointer">About</button></li>
+              <li><button onClick={() => setActiveTab('process')} className="nav-link body-2 appearance-none bg-transparent border-none cursor-pointer">Process</button></li>
             </ul>
 
 <div className="contact-section" ref={dropdownRef}>

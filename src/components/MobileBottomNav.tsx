@@ -26,7 +26,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, setActiveT
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
-    window.scrollTo({ top: SECTION_SCROLL[tab] ?? 0, behavior: 'smooth' });
+    // Virtual scroll jump is handled upstream by handleSetActiveTab in page.tsx
   };
 
   const svgs = {

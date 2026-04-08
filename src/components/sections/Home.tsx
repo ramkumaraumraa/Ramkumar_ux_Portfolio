@@ -57,7 +57,7 @@ export default function Home() {
     [...pre].forEach(char => {
       const span = document.createElement('span');
       span.className = 'char';
-      span.textContent = char === ' ' ? '\\u00A0' : char;
+      span.textContent = char === ' ' ? '\u00A0' : char;
       span.style.display = 'inline-block';
       h3_1.appendChild(span);
     });
@@ -71,7 +71,7 @@ export default function Home() {
     [...main].forEach(char => {
       const span = document.createElement('span');
       span.className = 'char';
-      span.textContent = char === ' ' ? '\\u00A0' : char;
+      span.textContent = char === ' ' ? '\u00A0' : char;
       span.style.display = 'inline-block';
       h1.appendChild(span);
     });
@@ -85,7 +85,7 @@ export default function Home() {
     [...post].forEach(char => {
       const span = document.createElement('span');
       span.className = 'char';
-      span.textContent = char === ' ' ? '\\u00A0' : char;
+      span.textContent = char === ' ' ? '\u00A0' : char;
       span.style.display = 'inline-block';
       h3_3.appendChild(span);
     });
@@ -307,26 +307,6 @@ export default function Home() {
     };
   }, [index]);
 
-  useEffect(() => {
-    if (!blockRef.current) return;
-
-    const onMove = (e: MouseEvent) => {
-      if (isAnimatingRef.current) return;
-      const { innerWidth: w, innerHeight: h } = window;
-      const x = e.clientX / w - 0.5;
-      const y = e.clientY / h - 0.5;
-      gsap.to(blockRef.current, {
-        x: x * 40,
-        y: y * 40,
-        duration: 0.6,
-        ease: 'power3.out',
-        force3D: true,
-      });
-    };
-
-    window.addEventListener('mousemove', onMove, { passive: true });
-    return () => window.removeEventListener('mousemove', onMove);
-  }, []);
 
   return (
     <section id="hero" className="home cinematic-hero" aria-labelledby="hero-text">

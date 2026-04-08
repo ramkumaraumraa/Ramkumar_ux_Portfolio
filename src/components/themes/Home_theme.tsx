@@ -130,6 +130,7 @@ const fragmentShader = `
 
 interface HomeThemeProps {
   intensity?: number;
+  intensityRef?: React.MutableRefObject<number>;
   responsive?: any;
   transitionsEnabled?: boolean;
   scrollData?: any;
@@ -137,10 +138,11 @@ interface HomeThemeProps {
   isIdle?: boolean;
 }
 
-export default function HomeTheme({ 
-  intensity = 1, 
-  responsive = {}, 
-  transitionsEnabled = true, 
+export default function HomeTheme({
+  intensity = 1,
+  intensityRef,
+  responsive = {},
+  transitionsEnabled = true,
   scrollData = {},
   currentSection = 'home'
 }: HomeThemeProps) {
@@ -186,7 +188,8 @@ export default function HomeTheme({
     
     const currentTime = (Date.now() - startTime.current) * 0.001;
     (meshRef.current.material as THREE.ShaderMaterial).uniforms.uTime.value = currentTime;
-    (meshRef.current.material as THREE.ShaderMaterial).uniforms.uIntensity.value = intensity;
+    (meshRef.current.material as THREE.ShaderMaterial).uniforms.uIntensity.value =
+      intensityRef ? intensityRef.current : intensity;
     (meshRef.current.material as THREE.ShaderMaterial).uniforms.uSectionIndex.value = sectionIndex;
     
     const scrollProgress = scrollData.progress || 0;

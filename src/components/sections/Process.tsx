@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 const processSteps = [
   {
@@ -51,12 +51,29 @@ const Process = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const masterTimelineRef = useRef<gsap.core.Timeline | null>(null);
 
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+  const localProgress = useSectionProgress(3); // Process is index 3
 
+  useEffect(() => {
     if (!sectionRef.current) return;
 
     const ctx = gsap.context(() => {
+      // Initial state
+      gsap.set('.process-card', { opacity: 0, scale: 0.9, y: 30 });
+
+      const entranceTl = gsap.timeline({ paused: true });
+      entranceTl.to('.process-card', {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        duration: 1,
+        stagger: 0.1,
+        ease: 'power2.out'
+      });
+
+      // Sync entrance with scroll
+      entranceTl.progress(localProgress);
+
+      // SVG Rotation Logic
       processSteps.forEach((_, cardIndex) => {
         for (let svgNum = 1; svgNum <= 4; svgNum++) {
           const isVisible = svgNum === cardIndex + 1;
@@ -113,20 +130,19 @@ const Process = () => {
         })
         .to({}, { duration: 4 });
 
-      ScrollTrigger.create({
-        trigger: sectionRef.current,
-        start: 'top 70%',
-        onEnter: () => masterTimelineRef.current?.restart(),
-        onLeave: () => masterTimelineRef.current?.pause(),
-        onEnterBack: () => masterTimelineRef.current?.play(),
-      });
+      // Autonomous trigger for SVG timeline when section is docked
+      if (localProgress > 0.7 && !masterTimelineRef.current?.isActive()) {
+        masterTimelineRef.current?.play();
+      } else if (localProgress < 0.2) {
+        masterTimelineRef.current?.pause();
+      }
     }, sectionRef);
 
     return () => {
       ctx.revert();
       masterTimelineRef.current?.kill();
     };
-  }, []);
+  }, [localProgress]);
 
   return (
     <section id="process" className="process-section" ref={sectionRef}>

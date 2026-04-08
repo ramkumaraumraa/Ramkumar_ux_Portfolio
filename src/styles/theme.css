@@ -379,23 +379,23 @@
   background: 
     /* Deep space layer */
     radial-gradient(ellipse 140% 120% at 30% 20%, 
-      rgba(0, 55, 29, 0.4) 0%, 
+      rgba(0, 80, 40, 0.55) 0%, 
       transparent 35%),
     radial-gradient(ellipse 100% 80% at 70% 60%, 
-      rgba(0, 32, 68, 0.6) 0%, 
+      rgba(0, 50, 100, 0.7) 0%, 
       transparent 40%),
     radial-gradient(ellipse 120% 90% at 20% 80%, 
-      rgba(36, 0, 15, 0.3) 0%, 
+      rgba(60, 0, 25, 0.45) 0%, 
       transparent 45%),
     radial-gradient(ellipse 90% 110% at 80% 30%, 
-      rgba(34, 0, 78, 0.8) 0%, 
+      rgba(55, 0, 110, 0.85) 0%, 
       transparent 38%),
     /* Base cosmic gradient */
     radial-gradient(circle at 50% 50%, 
-      rgb(0, 55, 29), 
-      rgb(0, 32, 68), 
-      rgb(36, 0, 15), 
-      rgb(34, 0, 78));
+      rgb(0, 45, 22), 
+      rgb(0, 25, 55), 
+      rgb(28, 0, 12), 
+      rgb(26, 0, 60));
   
   background-size: 
     200% 180%,
@@ -408,8 +408,6 @@
   animation: 
     nebula-cosmic 20s ease-in-out infinite,
     nebula-drift 35s linear infinite;
-  
-  mix-blend-mode: screen;
   
   /* Performance optimizations */
   will-change: transform, background-size;

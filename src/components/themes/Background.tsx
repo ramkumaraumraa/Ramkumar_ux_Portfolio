@@ -25,7 +25,7 @@ const Background = ({ onReady, currentSection: currentSectionProp }: BackgroundP
       
       const lowPerf = mobile || 
                      navigator.hardwareConcurrency <= 2 || 
-                     (navigator as any).deviceMemory <= 4 ||
+                     (navigator as any).deviceMemory <= 2 ||
                      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       setIsLowPerf(lowPerf);
       
@@ -233,11 +233,13 @@ const Background = ({ onReady, currentSection: currentSectionProp }: BackgroundP
     let targetLayerCount = isLowPerf ? 2 : 3;
     let animationId: number;
 
-    const handleScroll = () => {
+    // Listen for virtual-scroll progress events dispatched by page.tsx
+    const handleVirtualScroll = (e: Event) => {
       if (!isLowPerf) {
-        const scrollTop = window.scrollY || window.pageYOffset;
-        const maxScroll = document.body.scrollHeight - window.innerHeight;
-        targetLayerCount = THREE.MathUtils.clamp(3 + (scrollTop / maxScroll) * 3, 3, 6);
+        const progress = (e as CustomEvent).detail?.progress ?? 0;
+        // Periodic density: 3 at start/end, 6 in the middle
+        const periodicProgress = 1 - Math.abs(2 * progress - 1); // 0 -> 1 -> 0
+        targetLayerCount = 3 + periodicProgress * 3;
       }
     };
 
@@ -247,7 +249,7 @@ const Background = ({ onReady, currentSection: currentSectionProp }: BackgroundP
     };
 
     if (!isLowPerf) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('virtual-scroll', handleVirtualScroll);
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
     }
 
@@ -278,7 +280,7 @@ const Background = ({ onReady, currentSection: currentSectionProp }: BackgroundP
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('virtual-scroll', handleVirtualScroll);
       window.removeEventListener('mousemove', handleMouseMove);
       
       if (threeContainer && mountRef.current && mountRef.current.contains(threeContainer)) {
