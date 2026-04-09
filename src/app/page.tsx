@@ -18,10 +18,11 @@ const AboutSection   = dynamic(() => import('../components/sections/About'),   {
 const ProcessSection = dynamic(() => import('../components/sections/Process'), { ssr: false });
 const FooterSection  = dynamic(() => import('../components/sections/Footer'),  { ssr: false });
 
-import { 
-  SECTION_THRESHOLDS, 
-  SECTION_IDS, 
-  VIRTUAL_MAX 
+import {
+  SECTION_THRESHOLDS,
+  SECTION_IDS,
+  SECTION_DOCK_PROGRESS,
+  VIRTUAL_MAX
 } from '@/lib/scrollConstants';
 
 export default function Page() {
@@ -83,71 +84,41 @@ export default function Page() {
   useEffect(() => {
     if (!loaderComplete) return;
 
-    // Lock native scroll completely — no proxy div needed
+    // On mobile: lock document scroll so the body doesn't drift, but do NOT
+    // intercept touch events — native touch scroll inside SectionPanels must work.
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 
-    const WHEEL_MULT  = 1.4;
-    const TOUCH_MULT  = 2.5;
-    const EASE        = 0.085; // lerp factor per frame
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      // Allow infinite growth/shrinkage, we'll modulo in the tick
-      targetScrollRef.current += e.deltaY * WHEEL_MULT;
-    };
-
-    const onTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      const dy = touchStartY.current - e.touches[0].clientY;
-      touchStartY.current = e.touches[0].clientY;
-      targetScrollRef.current += dy * TOUCH_MULT;
-    };
-
-    // Smooth loop
+    // RAF tick always runs — drives section-transition animations on all devices
     let lastVirtual = 0;
     let lastEmitTime = Date.now();
     const tick = () => {
       const prev = virtualScrollRef.current;
-      
-      // ── Loop/Modulo Target ──
-      // Keep target within [0, VIRTUAL_MAX] for stability
+
       targetScrollRef.current = ((targetScrollRef.current % VIRTUAL_MAX) + VIRTUAL_MAX) % VIRTUAL_MAX;
 
-      // ── Shortest Path Lerp ──
       let diff = targetScrollRef.current - prev;
-      // If distance > 50% of the tunnel, it's faster to go around the back
       if (Math.abs(diff) > VIRTUAL_MAX / 2) {
         diff -= Math.sign(diff) * VIRTUAL_MAX;
       }
 
-      // Compute current normalized progress for snapping logic
       const currentProgress = prev / VIRTUAL_MAX;
-      
-      // Soft Magnetic Snap Logic
-      const SNAP_RADIUS = 0.012; 
+
+      const SNAP_RADIUS = 0.012;
       let isNearDock = false;
       for (const t of SECTION_THRESHOLDS) {
-        // Distance considering wrap-around
         const d = Math.abs(currentProgress - t);
-        const wrappedD = Math.min(d, 1 - d); 
+        const wrappedD = Math.min(d, 1 - d);
         if (wrappedD < SNAP_RADIUS) {
           isNearDock = true;
           break;
         }
       }
-      
+
       const dynamicEase = isNearDock ? 0.025 : 0.07;
       virtualScrollRef.current += diff * dynamicEase;
-
-      // Normalize virtual scroll after movement
       virtualScrollRef.current = ((virtualScrollRef.current % VIRTUAL_MAX) + VIRTUAL_MAX) % VIRTUAL_MAX;
 
-      // Stop jitter
       if (Math.abs(diff) < 0.1) {
         virtualScrollRef.current = targetScrollRef.current;
       }
@@ -160,11 +131,10 @@ export default function Page() {
         updateSection(progress);
         ScrollTrigger.update();
 
-        // Fire lenis-compatible scroll event so Orchestrator velocity/idle logic works
         const now = Date.now();
         const dt = Math.max(1, now - lastEmitTime);
-        const velocity = rawDelta / dt;   // px/ms
-        
+        const velocity = rawDelta / dt;
+
         lenisRef.current.emit('scroll', {
           scroll: virtualScrollRef.current,
           progress,
@@ -172,14 +142,13 @@ export default function Page() {
           direction: rawDelta >= 0 ? 1 : -1,
         });
 
-        // Fire global virtual-scroll event for the Background component and other listeners
-        window.dispatchEvent(new CustomEvent('virtual-scroll', { 
-          detail: { 
+        window.dispatchEvent(new CustomEvent('virtual-scroll', {
+          detail: {
             progress,
             scroll: virtualScrollRef.current,
             velocity,
             direction: rawDelta >= 0 ? 1 : -1
-          } 
+          }
         }));
 
         lastEmitTime = now;
@@ -191,34 +160,109 @@ export default function Page() {
 
     rafIdRef.current = requestAnimationFrame(tick);
 
-    window.addEventListener('wheel', onWheel, { passive: false });
+    const WHEEL_MULT = 1.4;
+    const TOUCH_MULT = 2.5;
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    if (!responsive.isMobile) {
+      // Desktop: wheel + touch both drive virtual scroll directly.
+      const onWheel = (e: WheelEvent) => {
+        e.preventDefault();
+        targetScrollRef.current += e.deltaY * WHEEL_MULT;
+      };
+      const onTouchMoveDesktop = (e: TouchEvent) => {
+        e.preventDefault();
+        const dy = touchStartY.current - e.touches[0].clientY;
+        touchStartY.current = e.touches[0].clientY;
+        targetScrollRef.current += dy * TOUCH_MULT;
+      };
+
+      window.addEventListener('wheel', onWheel, { passive: false });
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMoveDesktop, { passive: false });
+
+      return () => {
+        cancelAnimationFrame(rafIdRef.current);
+        window.removeEventListener('wheel', onWheel);
+        window.removeEventListener('touchstart', onTouchStart);
+        window.removeEventListener('touchmove', onTouchMoveDesktop);
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      };
+    }
+
+    // Mobile — boundary-aware touch navigation.
+    // Swipe inside a scrollable section panel scrolls the content natively.
+    // At the top/bottom edge of a panel, or outside any scrollable element,
+    // the swipe drives the virtual scroll so users can navigate between sections.
+    const getScrollableAncestor = (el: Element | null): Element | null => {
+      while (el && el !== document.documentElement) {
+        if (el.scrollHeight > el.clientHeight + 1) {
+          const { overflowY } = window.getComputedStyle(el);
+          if (overflowY === 'auto' || overflowY === 'scroll') return el;
+        }
+        el = el.parentElement;
+      }
+      return null;
+    };
+
+    const onTouchMoveMobile = (e: TouchEvent) => {
+      const dy = touchStartY.current - e.touches[0].clientY;
+      touchStartY.current = e.touches[0].clientY;
+
+      const scrollable = getScrollableAncestor(e.target as Element);
+
+      if (scrollable) {
+        const atTop = scrollable.scrollTop <= 0;
+        const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
+
+        if ((dy > 0 && atBottom) || (dy < 0 && atTop)) {
+          // At a scroll boundary — hand off to virtual section navigation.
+          e.preventDefault();
+          targetScrollRef.current += dy * TOUCH_MULT;
+        }
+        // else: content not at edge, let native scrolling handle it.
+      } else {
+        // Not inside any scrollable element — drive virtual navigation.
+        e.preventDefault();
+        targetScrollRef.current += dy * TOUCH_MULT;
+      }
+    };
+
     window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchmove', onTouchMoveMobile, { passive: false });
 
     return () => {
       cancelAnimationFrame(rafIdRef.current);
-      window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchmove', onTouchMoveMobile);
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     };
-  }, [loaderComplete, updateSection]);
+  }, [loaderComplete, updateSection, responsive.isMobile]);
 
   // ── Nav-click scroll (jump to section by progress) ───────────
   const handleSetActiveTab = useCallback((tab: string) => {
     const idx = SECTION_IDS.indexOf(tab as any);
-    const threshold = SECTION_THRESHOLDS[idx - 1] ?? 0;
-    const targetPx = threshold * VIRTUAL_MAX;
-    
-    // Instead of jumping, we set the target. The tick loop will handle the shortest path.
-    targetScrollRef.current = targetPx;
+    if (idx < 0) return;
+    targetScrollRef.current = SECTION_DOCK_PROGRESS[idx] * VIRTUAL_MAX;
     setActiveSection(tab);
   }, []);
 
   useEffect(() => {
     if (backgroundReady) (window as any).backgroundReady = true;
   }, [backgroundReady]);
+
+  // Fix 1: Warm up SectionPanel progress values immediately after loader exits
+  useEffect(() => {
+    if (!loaderComplete) return;
+    window.dispatchEvent(new CustomEvent('virtual-scroll', {
+      detail: { progress: 0, scroll: 0, velocity: 0, direction: 1 }
+    }));
+  }, [loaderComplete]);
 
   const handleLoaderComplete = () => {
     gsap.to('.loader', {

@@ -1,68 +1,44 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { gsap } from 'gsap';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
+import { useLocalTime } from '@/hooks/useLocalTime';
+import { SOCIAL_LINKS } from '@/lib/socialLinks';
 
 import Form from '../Form';
 
-const testimonialsData: { name: string; role: string; description: string; image: string; }[] = [
-  {
-    name: 'SAMUEL',
-    role: 'Lead Collaborator',
-    description: 'Ram\'s design philosophy centers on user empathy and business impact. His ability to translate complex requirements into elegant solutions consistently exceeded our project expectations.',
-    image: '/assets/imgs/Footer/Sameul.png',
-  },
-  {
-    name: 'CHEVVIYAN',
-    role: 'Product Owner',
-    description: 'Ram\'s expertise in user research and design systems implementation helped us establish a scalable design foundation that continues to drive our product innovation.',
-    image: '/assets/imgs/Footer/Default.png',
-  },
-  {
-    name: 'DIVYA',
-    role: 'Scrum Master',
-    description: 'Working with Ramkumar has been transformative for our team dynamics. His strategic approach to UX design and mentorship has elevated our entire product development process.',
-    image: '/assets/imgs/Footer/Divya.png',
-  },
+const featuredTestimonials = [
   {
     name: 'HARISH',
     role: 'Senior Developer',
-    description: 'Working hand-in-hand with Ram was a game changer. Together we built impactful LMS products that boosted revenue. His design foresight and my development expertise created seamless solutions that scaled globally.',
+    description: 'Working with Ram was a force multiplier. His product thinking and design foresight made complex LMS experiences clearer, faster to build, and easier to scale.',
     image: '/assets/imgs/Footer/Harish.png',
-  },
-  {
-    name: 'PURUSHOTHAM',
-    role: 'Business Analyst',
-    description: 'Ramkumar transformed a construction-focused project management platform with scalable design systems and clear user–business alignment. At the same time, he pushed boundaries to deliver an adhoc product solution under a very short deadline — bringing clarity and speed to execution.',
-    image: '/assets/imgs/Footer/Default.png',
+    variant: 'left',
   },
   {
     name: 'JAYASHANKAR',
     role: 'Founder of Sachirva',
-    description: "Ram is a very good team player with remarkable patience and skill. He took my e-learning startup idea from scratch, building the branding, design system, and complex product flows that enabled us to automate tests and deliver learning directly into students' hands.",
+    description: 'Ram took our e-learning idea from zero to a usable product system. He brought structure, patience, and the kind of end-to-end thinking early-stage products badly need.',
     image: '/assets/imgs/Footer/Jayashankar.png',
+    variant: 'featured',
+  },
+  {
+    name: 'DIVYA',
+    role: 'Scrum Master',
+    description: 'Ram raises the quality of the whole team. His strategic UX approach and calm mentorship made decisions clearer and delivery stronger.',
+    image: '/assets/imgs/Footer/Divya.png',
+    variant: 'right',
   },
 ];
 
 const Footer = () => {
-  const [localTime, setLocalTime] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const footerRef = useRef<HTMLElement>(null);
   const localProgress = useSectionProgress(4); // Footer is index 4
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const time = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-      setLocalTime(time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const localTime = useLocalTime();
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     if (!footerRef.current) return;
@@ -70,30 +46,52 @@ const Footer = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ paused: true });
 
-      tl.fromTo('.testimonial-card', { 
-        opacity: 0, 
-        y: 40,
-        scale: 0.9,
-        rotation: (i) => (i % 2 === 0 ? -2 : 2)
-      }, { 
-        opacity: 1, 
-        y: 0, 
-        scale: 1,
-        rotation: 0,
-        stagger: 0.05,
-        duration: 1, 
-        ease: 'power2.out' 
+      tl.fromTo('.footer-heading-plane', {
+        opacity: 0,
+        y: 36,
+      }, {
+        opacity: 1,
+        y: 0,
+        duration: 0.7,
+        ease: 'power2.out',
       }, 0);
 
-      tl.fromTo('.footer-content', { 
-        opacity: 0, 
-        y: 60 
-      }, { 
-        opacity: 1, 
-        y: 0, 
-        duration: 0.8, 
-        ease: 'power2.out' 
-      }, 0.5);
+      tl.fromTo('.testimonial-card--featured', {
+        opacity: 0,
+        y: 48,
+        scale: 0.92,
+      }, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.9,
+        ease: 'power2.out',
+      }, 0.1);
+
+      tl.fromTo('.testimonial-card--side', {
+        opacity: 0,
+        y: 56,
+        scale: 0.9,
+      }, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.85,
+        stagger: 0.08,
+        ease: 'power2.out',
+      }, 0.18);
+
+      tl.fromTo('.footer-contact-panel, .footer-mobile-meta', {
+        opacity: 0,
+        y: 64,
+        scale: 0.96,
+      }, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.85,
+        ease: 'power2.out',
+      }, 0.42);
 
       tl.progress(localProgress);
     }, footerRef);
@@ -103,58 +101,113 @@ const Footer = () => {
 
   return (
     <section ref={footerRef} id="footer" className="footer-testimonials-section">
-      <div className="testimonials-content">
-        <h5 className="turquoise h5 neon section-sticky-label section-sticky-label--full" style={{ marginTop: '24px' }}>
-          TESTIMONIALS
-        </h5>
-        <div className="testimonials-3d-grid">
-          {testimonialsData.map((testimonial, index) => (
-            <div key={`testimonial-${index}`} className="testimonial-card">
-              <div className="testimonial-card-header">
+      <div className="footer-heading-plane">
+        <p className="caption-text footer-heading-label">TESTIMONIALS</p>
+      </div>
+
+      <div className="footer-testimonial-plane">
+        {featuredTestimonials.map((testimonial) => {
+          const isFeatured = testimonial.variant === 'featured';
+
+          return (
+            <article
+              key={testimonial.name}
+              className={`testimonial-card ${isFeatured ? 'testimonial-card--featured' : 'testimonial-card--side'} testimonial-card--${testimonial.variant}`}
+            >
+              <p className="body-2 testimonial-quote">“{testimonial.description}”</p>
+
+              <div className="testimonial-card-footer">
                 <Image
                   src={testimonial.image}
                   alt={testimonial.name}
-                  width={64}
-                  height={64}
+                  width={56}
+                  height={56}
                   className="testimonial-img"
                 />
+
                 <div className="testimonial-card-content">
                   <p className="body-title-2">{testimonial.name}</p>
+                  <p className="footnote testimonial-role">{testimonial.role}</p>
                 </div>
               </div>
-              <p className="body-1">{testimonial.role}</p>
-              <p className="caption-text">{testimonial.description}</p>
-            </div>
-          ))}
-        </div>
+            </article>
+          );
+        })}
       </div>
 
-      <div className="footer-content">
-        <h6 className="blue h6 neon footer-title">Thanks for stopping by!</h6>
+      <div className="footer-contact-plane">
+        <div className="footer-contact-panel">
+          <div className="footer-contact-top">
+            <div className="footer-contact-copy">
+              <p className="caption-text footer-contact-overline">Thanks for stopping by</p>
+              <p className="sub-header-1 footer-contact-title">
+                Open to product design, UX systems, and mentoring conversations.
+              </p>
+            </div>
 
-        <div className="footer-sections">
-          <div className="footer-left">
-            <p className="sub-header-3">Get in Touch</p>
-            <p className="sub-header-3">Email: ramkumargd01@gmail.com</p>
-            <p className="sub-header-3">Phone: +91-9176750625</p>
+            <div className="footer-contact-aside">
+              <div className="footer-contact-actions">
+                <button onClick={() => setIsFormOpen(true)} className="card-button body-2 footer-contact-button">
+                  Open contact form
+                  <span></span><span></span><span></span><span></span><span></span>
+                </button>
+
+                <a href="mailto:ramkumargd01@gmail.com" className="footer-contact-link body-2">
+                  Email directly
+                </a>
+              </div>
+
+              <div className="footer-contact-direct">
+                <a href="mailto:ramkumargd01@gmail.com" className="body-2 footer-direct-link">
+                  Email: ramkumargd01@gmail.com
+                </a>
+                <a href="tel:+919176750625" className="body-2 footer-direct-link">
+                  Phone: +91-9176750625
+                </a>
+              </div>
+            </div>
           </div>
 
-          <div className="footer-right">
-            <p className="body-2" style={{ marginBottom: '16px' }}>
+          <div className="footer-contact-bottom">
+            <div className="footer-social-links" aria-label="Social links">
+              {SOCIAL_LINKS.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-social-link"
+                  aria-label={link.label}
+                  title={link.label}
+                >
+                  <Image
+                    src={link.defaultIcon}
+                    alt=""
+                    width={18}
+                    height={18}
+                    className="footer-social-icon"
+                  />
+                </a>
+              ))}
+            </div>
+
+            <p className="body-2 footer-contact-body">
               Feel free to fill out the reach out form, my response back time is 1-3 days
             </p>
-            <button onClick={() => setIsFormOpen(true)} className="card-button body-2">
-              Reach out form
-              <span></span><span></span><span></span><span></span><span></span>
-            </button>
+
+            <div className="footer-contact-meta">
+              <p className="footnote footer-contact-time">
+                {`Local time ${localTime} GMT+5:30`}
+              </p>
+              <p className="footnote footer-contact-copyright">
+                {`Ramkumar \u00A9 ${currentYear} | All rights reserved`}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="footer-bottom">
-          <div className="footer-bottom-row">
-            <p className="footnote">RamKumar © {new Date().getFullYear()} | Powered by ILAKH | All Rights Reserved</p>
-            <p className="local-time footnote">Local Time: {localTime} GMT +5:30</p>
-          </div>
+        <div className="footer-mobile-meta">
+          <p className="footnote">{`Local time ${localTime} GMT+5:30`}</p>
         </div>
       </div>
 

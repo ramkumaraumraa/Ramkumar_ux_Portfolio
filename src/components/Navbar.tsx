@@ -1,303 +1,323 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Image from "next/image";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
 
-import Form from './Form';
+import Form from "./Form";
 
-const Logo = '/assets/imgs/Logo.svg';
-const PhoneIcon = '/assets/imgs/icons/Phone.svg';
-const EmailIcon = '/assets/imgs/icons/Email.svg';
-const CopyIcon = '/assets/imgs/icons/file_copy.svg';
-import MobileBottomNav from './MobileBottomNav';
+const LOGO_SRC = "/assets/imgs/Logo.svg";
+const PHONE_ICON_SRC = "/assets/imgs/icons/Phone.svg";
+const EMAIL_ICON_SRC = "/assets/imgs/icons/Email.svg";
+const COPY_ICON_SRC = "/assets/imgs/icons/file_copy.svg";
+const RESUME_SRC = "/assets/imgs/About/Ramkumarux_Resume.pdf";
+
+const PRIMARY_NAV_ITEMS = [
+  { id: "works", label: "Works", icon: WorksIcon },
+  { id: "about", label: "About", icon: AboutIcon },
+  { id: "process", label: "Process", icon: ProcessIcon },
+] as const;
 
 interface NavbarProps {
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () => {} }) => {
+function Navbar({ activeTab = "home", setActiveTab = () => {} }: NavbarProps) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const contactButtonRef = useRef<HTMLButtonElement>(null);
-  const glowAnimationRef = useRef<any>(null);
-
-  const socialIcons = [
-    {
-      default: '/assets/imgs/icons/social icons/01_Icon_Instagram.svg',
-      hover: '/assets/imgs/icons/social icons/01_Icon_clr_Instagram.svg',
-      link: 'https://www.instagram.com/ramkumargd01',
-    },
-    {
-      default: '/assets/imgs/icons/social icons/02_Icon_Dribbble.svg',
-      hover: '/assets/imgs/icons/social icons/02_Icon_clr_Dribbble.svg',
-      link: 'https://dribbble.com/Ramuxui6',
-    },
-    {
-      default: '/assets/imgs/icons/social icons/03_Icon_Behance.svg',
-      hover: '/assets/imgs/icons/social icons/03_Icon_clr_Behance.svg',
-      link: 'https://www.behance.net/ramkumar6g80e6',
-    },
-    {
-      default: '/assets/imgs/icons/social icons/04_Icon_Linkedin.svg',
-      hover: '/assets/imgs/icons/social icons/04_Icon_clr_Linkedin.svg',
-      link: 'https://www.linkedin.com/in/ramkumar6g/',
-    },
-    {
-      default: '/assets/imgs/icons/social icons/05_Icon_ADPlist.svg',
-      hover: '/assets/imgs/icons/social icons/05_Icon_clr_ADPlist.svg',
-      link: 'https://adplist.org/mentors/ramkumar-g',
-    },
-  ];
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    setIsMobile(window.innerWidth <= 1024);
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const dockRef = useRef<HTMLElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
+  const contactButtonRef = useRef<HTMLButtonElement>(null);
+
+  const closeDropdown = useCallback((animated = true) => {
+    const dropdownMenu = dropdownMenuRef.current;
+
+    if (!animated || !dropdownMenu) {
+      setDropdownVisible(false);
+      return;
+    }
+
+    gsap.to(dropdownMenu, {
+      autoAlpha: 0,
+      y: 18,
+      scale: 0.96,
+      duration: 0.2,
+      ease: "power2.in",
+      onComplete: () => setDropdownVisible(false),
+    });
   }, []);
 
   useEffect(() => {
-    if (contactButtonRef.current && !isMobile) {
-      glowAnimationRef.current = gsap.to(contactButtonRef.current, {
-        '--gradient-angle': '360deg',
-        duration: 4,
-        ease: 'none',
-        repeat: -1,
-      } as any); // Type cast due to custom CSS var usage
-    }
+    if (!frameRef.current) return;
 
-    return () => {
-      if (glowAnimationRef.current) {
-        glowAnimationRef.current.kill();
+    void gsap.fromTo(
+      frameRef.current,
+      { y: 72, autoAlpha: 0 },
+      { y: 0, autoAlpha: 1, duration: 0.75, ease: "power3.out", delay: 0.35 }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!contactButtonRef.current) return;
+
+    const tween = gsap.to(contactButtonRef.current, {
+      "--gradient-angle": "360deg",
+      duration: 5.5,
+      ease: "none",
+      repeat: -1,
+    } as gsap.TweenVars);
+
+    return () => tween.kill();
+  }, []);
+
+  useEffect(() => {
+    if (!dropdownVisible || !dropdownMenuRef.current) return;
+
+    gsap.fromTo(
+      dropdownMenuRef.current,
+      { autoAlpha: 0, y: 18, scale: 0.96 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: 0.24, ease: "power2.out" }
+    );
+  }, [dropdownVisible]);
+
+  useEffect(() => {
+    if (!dropdownVisible) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (dropdownRef.current?.contains(event.target as Node)) return;
+      closeDropdown();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeDropdown();
       }
     };
-  }, [isMobile]);
 
-  useEffect(() => {
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-      gsap.to(navbar, {
-        scrollTrigger: {
-          trigger: document.body,
-          start: 'top top',
-          end: '+=200',
-          scrub: true,
-        },
-        background: 'rgba(6, 12, 24, 0.97)',
-        boxShadow: '0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,220,255,0.12)',
-      });
-    }
-  }, []);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeDropdown, dropdownVisible]);
 
   const showToast = (message: string) => {
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification';
+    const toast = document.createElement("div");
+    toast.className = "toast-notification";
     toast.textContent = message;
     document.body.appendChild(toast);
-    
-    gsap.fromTo(toast, 
-      { y: 100, opacity: 0 },
-      { 
-        y: -20, 
-        opacity: 1, 
-        duration: 0.5,
-        ease: 'power2.out',
+
+    gsap.fromTo(
+      toast,
+      { y: 24, autoAlpha: 0 },
+      {
+        y: 0,
+        autoAlpha: 1,
+        duration: 0.35,
+        ease: "power2.out",
         onComplete: () => {
           gsap.to(toast, {
-            y: 100,
-            opacity: 0,
-            duration: 0.5,
-            delay: 2,
-            ease: 'power2.in',
-            onComplete: () => toast.remove()
+            y: 18,
+            autoAlpha: 0,
+            duration: 0.3,
+            delay: 1.8,
+            ease: "power2.in",
+            onComplete: () => toast.remove(),
           });
-        }
+        },
       }
     );
   };
 
-  const copyToClipboard = (text: string, event: React.MouseEvent<HTMLButtonElement>) => {
-    navigator.clipboard.writeText(text).then(() => {
-      const button = event.currentTarget;
-      const img = button.querySelector('img');
-      if (img) {
-        gsap.to(img, {
-          scale: 1.2,
-          duration: 0.2,
-          yoyo: true,
-          repeat: 1,
-          ease: 'power1.out',
-        });
+  const copyToClipboard = async (
+    text: string,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    try {
+      await navigator.clipboard.writeText(text);
+
+      const copyIcon = event.currentTarget.querySelector("[data-copy-icon]");
+      if (copyIcon) {
+        gsap.fromTo(
+          copyIcon,
+          { scale: 1 },
+          { scale: 1.18, duration: 0.15, yoyo: true, repeat: 1, ease: "power1.out" }
+        );
       }
-      showToast(`${text} copied to clipboard!`);
-    });
+
+      showToast(`${text} copied to clipboard`);
+    } catch {
+      showToast("Copy failed. Please try again.");
+    }
   };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownVisible(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const isNowMobile = window.innerWidth <= 1024;
-      setIsMobile(isNowMobile);
-      if (!isNowMobile) setMenuOpen(false);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleContactClick = () => {
-    setDropdownVisible(!dropdownVisible);
-    
-    if (!dropdownVisible) {
-      gsap.fromTo('.dropdown-menu',
-        { opacity: 0, y: -20, scale: 0.95 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'power2.out' }
-      );
+    if (dropdownVisible) {
+      closeDropdown();
+      return;
     }
-  };
 
-  const handleDropdownMouseLeave = () => {
-    gsap.to('.dropdown-menu', {
-      opacity: 0,
-      y: -20,
-      scale: 0.95,
-      duration: 0.3,
-      ease: 'power2.in',
-      onComplete: () => setDropdownVisible(false),
-    });
-  };
-
-  const toggleMobileMenu = () => {
-    setMenuOpen(!menuOpen);
-    // document.body.style.overflow = menuOpen ? 'auto' : 'hidden'; // Removed for virtual scroll compatibility
-    
-    const timeline = gsap.timeline();
-    if (!menuOpen) {
-      timeline
-        .fromTo('#mobile-menu',
-          { x: '100%', opacity: 0 },
-          { x: '0%', opacity: 1, duration: 0.5, ease: 'power2.out' }
-        )
-        .fromTo('#mobile-menu ul li',
-          { opacity: 0, x: 30 },
-          { opacity: 1, x: 0, stagger: 0.1, ease: 'power2.out' },
-          '<'
-        );
-    } else {
-      timeline.to('#mobile-menu', 
-        { x: '100%', opacity: 0, duration: 0.5, ease: 'power2.in' }
-      );
-    }
-  };
-
-  const scrollToHome = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    setActiveTab('home');
+    setDropdownVisible(true);
   };
 
   const openContactForm = () => {
     setIsFormOpen(true);
-    setDropdownVisible(false);
-    if (menuOpen) toggleMobileMenu();
-  };
-
-  const closeContactForm = () => {
-    setIsFormOpen(false);
+    closeDropdown(false);
   };
 
   const downloadResume = () => {
-    window.open('/assets/imgs/About/Ramkumarux_Resume.pdf', '_blank');
-    setDropdownVisible(false);
-    if (menuOpen) toggleMobileMenu();
+    window.open(RESUME_SRC, "_blank", "noopener,noreferrer");
+    closeDropdown(false);
   };
+
+  const isContactActive = activeTab === "footer" || dropdownVisible;
 
   return (
     <>
-      {!isMobile && (
-        <nav className="navbar">
-          <div className="logo-section">
-            <button onClick={() => setActiveTab('home')} className="logo-link appearance-none bg-transparent border-none cursor-pointer">
-              <img src={Logo} alt="Logo" className="logo-image" />
-              <span className="logo-text">Ramkumar</span>
+      <nav ref={dockRef} className="site-dock" aria-label="Primary">
+        <div ref={frameRef} className="site-dock__frame">
+          <div className="site-dock__edge site-dock__edge--start">
+            <button
+              type="button"
+              className={`site-dock__brand ${activeTab === "home" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("home")}
+            >
+              <span className="site-dock__brand-mark" aria-hidden="true">
+                <Image src={LOGO_SRC} alt="" width={28} height={28} />
+              </span>
+              <span className="site-dock__brand-wordmark">Ramkumar</span>
+              <span className="site-dock__brand-mobile-label">Home</span>
             </button>
           </div>
 
-        {!isMobile && (
-          <div className="nav-right">
-            <ul className="nav-list-right body-2">
-              <li><button onClick={() => setActiveTab('works')} className="nav-link body-2 appearance-none bg-transparent border-none cursor-pointer">Works</button></li>
-              <li><button onClick={() => setActiveTab('about')} className="nav-link body-2 appearance-none bg-transparent border-none cursor-pointer">About</button></li>
-              <li><button onClick={() => setActiveTab('process')} className="nav-link body-2 appearance-none bg-transparent border-none cursor-pointer">Process</button></li>
-            </ul>
+          <div className="site-dock__center">
+            <div className="site-dock__nav">
+              {PRIMARY_NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`site-dock__item ${activeTab === id ? "is-active" : ""}`}
+                  onClick={() => setActiveTab(id)}
+                >
+                  <span className="site-dock__item-icon" aria-hidden="true">
+                    <Icon />
+                  </span>
+                  <span className="site-dock__item-label">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-<div className="contact-section" ref={dropdownRef}>
-              <button 
+          <div className="site-dock__edge site-dock__edge--end">
+            <div ref={dropdownRef} className="site-dock__contact">
+              <button
                 ref={contactButtonRef}
-                className={`contact-glow-button ${dropdownVisible ? 'active' : ''}`}
-                onClick={handleContactClick}
+                type="button"
+                className={`site-dock__item site-dock__item--contact ${isContactActive ? "is-active" : ""}`}
+                onClick={isMobile ? () => setActiveTab("footer") : handleContactClick}
+                aria-expanded={isMobile ? undefined : dropdownVisible}
+                aria-haspopup={isMobile ? undefined : "dialog"}
               >
-                <span className="button-inner">
-                  <span className="button-text">Contact</span>
-                  <span className={`button-arrow ${dropdownVisible ? 'rotated' : ''}`}>▼</span>
+                <span className="site-dock__item-icon" aria-hidden="true">
+                  <ContactIcon />
+                </span>
+                <span className="site-dock__item-label">Contact</span>
+                <span className={`site-dock__chevron ${dropdownVisible ? "is-open" : ""}`} aria-hidden="true">
+                  ▾
                 </span>
               </button>
-              
+
               {dropdownVisible && (
-                <div 
-                  className="dropdown-menu body-2"
-                  onMouseLeave={handleDropdownMouseLeave}
+                <div
+                  ref={dropdownMenuRef}
+                  className="site-dock__dropdown body-2"
+                  role="dialog"
+                  aria-label="Contact options"
                 >
-                  <ul>
-                    <li className="contact-info">
+                  <ul className="site-dock__dropdown-list">
+                    <li className="site-dock__contact-row">
                       <p>
-                        <img src={EmailIcon} alt="Email" className="icon" />
+                        <Image src={EMAIL_ICON_SRC} alt="" width={18} height={18} />
                         <span>ramkumargd01@gmail.com</span>
                       </p>
                       <button
-                        onClick={(e) => copyToClipboard('ramkumargd01@gmail.com', e)}
-                        className="copy-button"
+                        type="button"
+                        onClick={(event) =>
+                          copyToClipboard("ramkumargd01@gmail.com", event)
+                        }
+                        className="site-dock__copy-button"
                         aria-label="Copy email"
                       >
-                        <img src={CopyIcon} alt="Copy" />
+                        <Image
+                          src={COPY_ICON_SRC}
+                          alt=""
+                          width={16}
+                          height={16}
+                          data-copy-icon
+                        />
                       </button>
                     </li>
-                    <li className="contact-info">
+
+                    <li className="site-dock__contact-row">
                       <p>
-                        <img src={PhoneIcon} alt="Phone" className="icon" />
+                        <Image src={PHONE_ICON_SRC} alt="" width={18} height={18} />
                         <span>+91 9176750625</span>
                       </p>
                       <button
-                        onClick={(e) => copyToClipboard('+91 9176750625', e)}
-                        className="copy-button"
+                        type="button"
+                        onClick={(event) => copyToClipboard("+91 9176750625", event)}
+                        className="site-dock__copy-button"
                         aria-label="Copy phone"
                       >
-                        <img src={CopyIcon} alt="Copy" />
+                        <Image
+                          src={COPY_ICON_SRC}
+                          alt=""
+                          width={16}
+                          height={16}
+                          data-copy-icon
+                        />
                       </button>
                     </li>
-                    <div className="dropdown-separator"></div>
-                    <li className="dropdown-action">
-                      <button onClick={openContactForm} className="dropdown-button">
+
+                    <li className="site-dock__dropdown-separator" aria-hidden="true" />
+
+                    <li>
+                      <button
+                        type="button"
+                        onClick={openContactForm}
+                        className="site-dock__dropdown-button"
+                      >
                         <span>Open Contact Form</span>
-                        <span className="action-arrow">→</span>
+                        <span className="site-dock__dropdown-arrow" aria-hidden="true">
+                          →
+                        </span>
                       </button>
                     </li>
-                    <li className="dropdown-action">
-                      <button onClick={downloadResume} className="dropdown-button">
+
+                    <li>
+                      <button
+                        type="button"
+                        onClick={downloadResume}
+                        className="site-dock__dropdown-button"
+                      >
                         <span>Download Resume</span>
-                        <span className="action-arrow">↓</span>
+                        <span className="site-dock__dropdown-arrow" aria-hidden="true">
+                          ↓
+                        </span>
                       </button>
                     </li>
                   </ul>
@@ -305,22 +325,54 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab = 'home', setActiveTab = () =
               )}
             </div>
           </div>
-        )}
-        </nav>
-      )}
+        </div>
+      </nav>
 
-      {isMobile && (
-        <MobileBottomNav
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          openContactForm={openContactForm}
-        />
-      )}
-
-      <Form isOpen={isFormOpen} onClose={closeContactForm} />
-      <div id="toast-container"></div>
+      <Form isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
     </>
   );
-};
+}
+
+function WorksIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="3" />
+      <path d="M8 8h8" />
+      <path d="M8 12h8" />
+      <path d="M8 16h5" />
+    </svg>
+  );
+}
+
+function AboutIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </svg>
+  );
+}
+
+function ProcessIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 7h5" />
+      <path d="M14 7h5" />
+      <path d="M12 7v10" />
+      <path d="M7.5 17h9" />
+      <circle cx="12" cy="17" r="2.5" />
+      <circle cx="12" cy="7" r="2.5" />
+    </svg>
+  );
+}
+
+function ContactIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="3" />
+      <path d="m6 8 6 4 6-4" />
+    </svg>
+  );
+}
 
 export default Navbar;

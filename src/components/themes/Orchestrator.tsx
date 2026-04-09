@@ -8,6 +8,7 @@ import HomeTheme from './Home_theme';
 import CameraRig from './CameraRig';
 import { Scenes } from './Scenes';
 import { ScenePostProcessing } from './ScenePostProcessing';
+import { SECTION_THRESHOLDS, SECTION_IDS } from '@/lib/scrollConstants';
 
 interface OrchestratorProps {
   lenis?: any;
@@ -53,9 +54,6 @@ export default function Orchestrator({
   const internalScrollProgressRef = useRef(0);
   const scrollProgressRef = externalScrollProgressRef ?? internalScrollProgressRef;
   
-  const SECTION_THRESHOLDS = [0.18, 0.36, 0.54, 0.72] as const;
-  const SECTION_IDS = ['home', 'works', 'about', 'process', 'footer'] as const;
-
   const updateSectionFromProgress = (progress: number) => {
     let section: string = 'home';
     for (let i = 0; i < SECTION_THRESHOLDS.length; i++) {
@@ -194,7 +192,7 @@ export default function Orchestrator({
 
             <Scenes scrollProgressRef={scrollProgressRef} />
 
-            <ScenePostProcessing />
+            <ScenePostProcessing currentSection={currentSection} />
 
             <Preload all />
           </Suspense>

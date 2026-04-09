@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 interface SectionPanelProps {
@@ -9,22 +9,57 @@ interface SectionPanelProps {
 }
 
 /**
- * SectionPanel: A CSS-based proximity overlay.
- * Replaces the R3F <Html> approach to avoid GSAP/Event limitations.
- * 
- * Drives visibility and scaling based on distance from the section dock.
+ * SectionPanel: CSS-based proximity overlay driven by virtual scroll progress.
+ *
+ * Desktop — scale + Y-translate entrance (camera-approach feel).
+ * Mobile  — opacity fade only, overflow-y: auto so section content scrolls natively.
+ *           Bottom padding clears the fixed dock nav and safe-area inset.
  */
 export function SectionPanel({ sectionIndex, children }: SectionPanelProps) {
   const localProgress = useSectionProgress(sectionIndex);
-  
-  // interaction is enabled only when we are significantly close to the dock
-  const isDocked = localProgress > 0.85;
-  
-  // Replicates the 'approaching dot' visual: starts small (0.3) and scales to 1.0
-  const scale = 0.3 + localProgress * 0.7;
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Performance: Unmount when completely invisible/far away
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const isDocked = localProgress > 0.85;
+
   if (localProgress <= 0) return null;
+
+  // ── Mobile: full-screen page, scrollable, fade transition ──────
+  if (isMobile) {
+    const mobileOverlayStyle: React.CSSProperties = {
+      position: 'fixed',
+      inset: 0,
+      zIndex: 10,
+      opacity: localProgress,
+      pointerEvents: isDocked ? 'auto' : 'none',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      willChange: 'opacity',
+    };
+
+    return (
+      <div
+        className="section-panel-overlay"
+        style={mobileOverlayStyle}
+      >
+        {/* Padding keeps the last touch targets clear of the fixed dock. */}
+        <div style={{ minHeight: '100%', paddingBottom: 112 }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Desktop: scale + Y-translate camera-approach entrance ──────
+  const eased = 1 - Math.pow(1 - localProgress, 3);
+  const scale = 0.3 + eased * 0.7;
+  const translateY = (1 - localProgress) * 40;
 
   return (
     <div
@@ -34,13 +69,13 @@ export function SectionPanel({ sectionIndex, children }: SectionPanelProps) {
         inset: 0,
         zIndex: 10,
         opacity: localProgress,
-        transform: `scale(${scale})`,
+        transform: `translateY(${translateY}px) scale(${scale})`,
         pointerEvents: isDocked ? 'auto' : 'none',
         willChange: 'transform, opacity',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>

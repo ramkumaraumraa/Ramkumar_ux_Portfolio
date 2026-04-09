@@ -208,7 +208,8 @@ const Background = ({ onReady, currentSection: currentSectionProp }: BackgroundP
               float fade = depth * smoothstep(1.5, 0.9, depth);
               col += SubtleStarLayer(uv * scale + i * 456.45 - M) * fade;
           }
-          gl_FragColor = vec4(col, 0.6);
+          float brightness = max(col.r, max(col.g, col.b));
+          gl_FragColor = vec4(col, clamp(brightness * 2.5, 0.0, 0.95));
       }
     `;
 

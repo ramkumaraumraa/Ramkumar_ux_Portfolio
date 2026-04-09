@@ -26,9 +26,10 @@ export function useSectionProgress(sectionIndex: number): number {
       // Convert 0-1 progress to world Z coordinate
       const cameraZ = -progress * TOTAL_DEPTH;
       
-      // Calculate shortest distance in a looping 3D space
-      const diff = Math.abs(cameraZ - dockZ) % TOTAL_DEPTH;
-      const distance = Math.min(diff, TOTAL_DEPTH - diff);
+      // Straight linear distance — no wrap-around.
+      // cameraZ is always in (-60, 0] so wrap math is not needed and
+      // would incorrectly equate home (Z=0) with footer (Z=-60).
+      const distance = Math.abs(cameraZ - dockZ);
       
       // Map distance to 0-1 progress (within VISIBLE_RANGE)
       const currentLocal = Math.max(0, 1 - distance / VISIBLE_RANGE);
