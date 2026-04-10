@@ -1829,9 +1829,9 @@ body.scroll-locked {
 
 .footer-contact-top {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) auto;
+  grid-template-columns: 1.3fr 1fr auto;
   gap: clamp(24px, 4vw, 56px);
-  align-items: start;
+  align-items: center;
 }
 
 .footer-contact-copy {
@@ -1883,10 +1883,10 @@ body.scroll-locked {
 
 .footer-contact-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: flex-start;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
 .footer-contact-button {

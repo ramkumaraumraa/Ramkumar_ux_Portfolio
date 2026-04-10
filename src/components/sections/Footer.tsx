@@ -36,31 +36,62 @@ const featuredTestimonials = [
 const Footer = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const footerRef = useRef<HTMLElement>(null);
-  const localProgress = useSectionProgress(4); // Footer is index 4
+  const tlRef = useRef<gsap.core.Timeline | null>(null);
+  const localProgress = useSectionProgress(4, 0.7); // Footer is index 4, delay text reveal until 70% approaching
   const localTime = useLocalTime();
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    // Removed GSAP carousel; now static 3D grid
+    if (!footerRef.current) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ paused: true });
+      
+      tl.fromTo(
+        '.testimonial-card',
+        { opacity: 0, y: 60, z: -100, rotateX: 10 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          z: 0, 
+          rotateX: 0, 
+          stagger: 0.15,
+          duration: 1, 
+          ease: 'power2.out',
+          clearProps: 'transform,rotateX,y,z' // ensure original CSS hover works!
+        },
+        0.2
+      );
+
+      tl.fromTo(
+        '.footer-contact-plane',
+        { opacity: 0, y: 50, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power2.out' },
+        0.4
+      );
+
+      tlRef.current = tl;
+    }, footerRef);
+
+    return () => ctx.revert();
+  }, []); // Run once on mount
+
+  useEffect(() => {
+    if (tlRef.current) {
+      tlRef.current.progress(localProgress);
+    }
   }, [localProgress]);
 
   return (
     <section ref={footerRef} id="footer" className="footer-testimonials-section">
-      <div className="footer-heading-plane">
-        <p className="caption-text footer-heading-label">TESTIMONIALS</p>
-      </div>
-
-      <div className="footer-testimonial-plane footer-3d-grid">
+      <div className="footer-testimonial-plane">
         {featuredTestimonials.map((testimonial, index) => {
           const isFeatured = testimonial.variant === 'featured';
 
           return (
             <article
               key={testimonial.name}
-              className={`testimonial-card testimonial-card-3d testimonial-card--${testimonial.variant}`}
-              style={{
-                transform: `translateZ(${index * 20}px) rotateY(${index * 5}deg)`
-              }}
+              className={`testimonial-card testimonial-card--${testimonial.variant}`}
             >
               <p className="body-2 testimonial-quote">"{testimonial.description}"</p>
 
@@ -83,36 +114,34 @@ const Footer = () => {
         })}
       </div>
 
+
       <div className="footer-contact-plane">
         <div className="footer-contact-panel">
           <div className="footer-contact-top">
             <div className="footer-contact-copy">
-              <p className="caption-text footer-contact-overline">Thanks for stopping by</p>
               <p className="sub-header-1 footer-contact-title">
-                Open to product design, UX systems, and mentoring conversations.
+                Open to product design, UX systems,<br/>and mentoring conversations.
               </p>
             </div>
 
-            <div className="footer-contact-aside">
-              <div className="footer-contact-actions">
-                <button onClick={() => setIsFormOpen(true)} className="card-button body-2 footer-contact-button">
-                  Open contact form
-                  <span></span><span></span><span></span><span></span><span></span>
-                </button>
+            <div className="footer-contact-direct">
+              <a href="mailto:ramkumargd01@gmail.com" className="body-2 footer-direct-link">
+                Email: ramkumargd01@gmail.com
+              </a>
+              <a href="tel:+919176750625" className="body-2 footer-direct-link">
+                Phone: +91-9176750625
+              </a>
+            </div>
 
-                <a href="mailto:ramkumargd01@gmail.com" className="footer-contact-link body-2">
-                  Email directly
-                </a>
-              </div>
+            <div className="footer-contact-actions">
+              <button onClick={() => setIsFormOpen(true)} className="card-button body-2 footer-contact-button">
+                OPEN CONTACT FORM
+                <span></span><span></span><span></span><span></span><span></span>
+              </button>
 
-              <div className="footer-contact-direct">
-                <a href="mailto:ramkumargd01@gmail.com" className="body-2 footer-direct-link">
-                  Email: ramkumargd01@gmail.com
-                </a>
-                <a href="tel:+919176750625" className="body-2 footer-direct-link">
-                  Phone: +91-9176750625
-                </a>
-              </div>
+              <a href="mailto:ramkumargd01@gmail.com" className="footer-contact-link body-2">
+                Email Directly
+              </a>
             </div>
           </div>
 
@@ -140,7 +169,7 @@ const Footer = () => {
             </div>
 
             <p className="body-2 footer-contact-body">
-              Feel free to fill out the reach out form, my response back time is 1-3 days
+              Feel free to fill out the reach out form,<br/>my response back time is 1-3 days
             </p>
 
             <div className="footer-contact-meta">

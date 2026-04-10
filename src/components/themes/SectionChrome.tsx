@@ -21,7 +21,7 @@ const SECTION_CHROME = {
     tone: "pink",
   },
   footer: {
-    title: "",
+    title: "Thanks for stopping by",
     tone: "neutral",
   },
 } as const;
