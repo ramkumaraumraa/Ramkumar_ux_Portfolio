@@ -84,11 +84,12 @@ const Process = () => {
 
       // ── 2. Description initial states ─────────────────────
       // Card 0 (active) description open; others collapsed
-      const descEls = cardRefs.current.map(el => el?.querySelector<HTMLElement>('.process-desc-wrap'));
+      const descEls = cardRefs.current.map(el => el?.querySelector<HTMLElement>('.process-desc-wrap') ?? null);
       gsap.set(descEls[0], { height: 'auto', opacity: 1 });
       [1, 2, 3].forEach(i => gsap.set(descEls[i], { height: 0, opacity: 0 }));
 
       // ── 3. Build paused entrance timeline ─────────────────
+      const q = gsap.utils.selector(sectionRef.current);
       const tl = gsap.timeline({ paused: true });
 
       // Cards emerge from blur/depth into arc positions — staggered 0.08s
@@ -108,19 +109,19 @@ const Process = () => {
 
       // Internal parallax: 3 layers at different Y start offsets (deeper = less travel)
       // SVG — slowest, feels deepest
-      tl.fromTo('.process-svg-wrap',
+      tl.fromTo(q('.process-svg-wrap'),
         { y: 32 },
         { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
         0,
       );
       // Title group — baseline
-      tl.fromTo('.process-card-title-group',
+      tl.fromTo(q('.process-card-title-group'),
         { y: 48 },
         { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
         0,
       );
       // Description text travels furthest — feels closest to viewer
-      tl.fromTo('.process-desc-wrap',
+      tl.fromTo(q('.process-desc-wrap'),
         { y: 64 },
         { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
         0,
