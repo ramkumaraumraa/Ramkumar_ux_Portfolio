@@ -1470,17 +1470,52 @@ body.scroll-locked {
   overflow: hidden;
 }
 
-/* Container + Grid (single markup for all breakpoints) */
-.process-container {
+/* ─── Arc container ─────────────────────────────────────── */
+.process-arc-container {
+  position: relative;
   width: 100%;
-  max-width: none;
+  height: 520px;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.process-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  width: 100%;
+/* Cards are placed absolutely by GSAP — only width set here */
+.process-arc-card {
+  position: absolute;
+  width: 280px;
+  will-change: transform, opacity;
+}
+
+/* Title + subtitle grouped for parallax targeting */
+.process-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+/* Description: GSAP controls height (0 → auto) */
+.process-desc-wrap {
+  overflow: hidden;
+}
+
+/* ─── Step indicator dots ───────────────────────────────── */
+.process-step-indicators {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.process-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  /* GSAP morphs width + background-color on active */
 }
 
 /* =========================================
@@ -1573,25 +1608,28 @@ body.scroll-locked {
    RESPONSIVE
    ========================================= */
 
-/* Tablet View */
-@media (max-width: 1024px) {  
-  .process-grid {
-    grid-template-columns: repeat(2, 1fr);
-    width: 100%;
-    gap: 16px;
-    max-width: 800px;
+/* Tablet: narrower cards */
+@media (max-width: 1024px) {
+  .process-arc-container {
+    height: 480px;
   }
-  
+  .process-arc-card {
+    width: 240px;
+  }
+
   .process-card {
     max-width: 360px;
   }
 }
 
-/* Mobile View - Centered Viewport Alignment */
-@media (max-width: 768px) {  
-  .process-grid { 
-    width: 100%;
-    grid-template-columns: 1fr;
+/* Mobile: single-card centered, clip overflow */
+@media (max-width: 768px) {
+  .process-arc-container {
+    height: 460px;
+    overflow: hidden;
+  }
+  .process-arc-card {
+    width: min(90vw, 340px);
   }
 }
   
@@ -2417,7 +2455,7 @@ body.scroll-locked {
   perspective: 1200px;
   transform-style: preserve-3d;
   position: fixed;
-  inset: 0;
+  inset: var(--zone-header) 0 var(--zone-dock);
   z-index: 11;
   pointer-events: none;
   display: flex;
