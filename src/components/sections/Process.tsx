@@ -83,8 +83,8 @@ const Process = () => {
       });
 
       const descEls = cardRefs.current.map(el => el?.querySelector<HTMLElement>('.process-desc-wrap') ?? null);
-      gsap.set(descEls[0], { height: 'auto', opacity: 1 });
-      [1, 2, 3].forEach(i => gsap.set(descEls[i], { height: 0, opacity: 0 }));
+      if (descEls[0]) gsap.set(descEls[0], { height: 'auto', opacity: 1 });
+      [1, 2, 3].forEach(i => { if (descEls[i]) gsap.set(descEls[i], { height: 0, opacity: 0 }); });
 
       // ── Entrance timeline ─────────────────────────────────
       const q = gsap.utils.selector(sectionRef.current);
@@ -167,7 +167,11 @@ const Process = () => {
           transitionTl.to(prevDesc, { height: 0, opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
         }
         if (nextDesc) {
-          transitionTl.to(nextDesc, { height: 'auto', opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.3);
+          // Measure natural height first — GSAP cannot tween to 'auto'
+          nextDesc.style.height = 'auto';
+          const naturalHeight = nextDesc.scrollHeight;
+          nextDesc.style.height = '0px';
+          transitionTl.to(nextDesc, { height: naturalHeight, opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.3);
         }
       };
 
