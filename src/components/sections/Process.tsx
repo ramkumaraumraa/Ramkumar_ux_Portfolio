@@ -13,6 +13,8 @@ const processSteps = [
     description:
       "I dive deep into uncovering core challenges and aspirations of clients and stakeholders. Through comprehensive exploration, I create detailed wireframes that align with strategic goals.",
     colorClass: "turquoise",
+    accentColor: "#00d7ff",
+    svgSrc: "/assets/imgs/Process/1.svg",
   },
   {
     id: 2,
@@ -21,6 +23,8 @@ const processSteps = [
     description:
       "Guided by a problem-solving mindset, I transform complex ideas into interactive prototypes. This approach provides a compelling vision of the end product before development begins.",
     colorClass: "pink",
+    accentColor: "#d946ef",
+    svgSrc: "/assets/imgs/Process/2.svg",
   },
   {
     id: 3,
@@ -29,6 +33,8 @@ const processSteps = [
     description:
       "Bridging stakeholders and users is key. I drive collaboration with developers and stakeholders, ensuring a fluid process from inception to post-launch.",
     colorClass: "blue",
+    accentColor: "#60a5fa",
+    svgSrc: "/assets/imgs/Process/3.svg",
   },
   {
     id: 4,
@@ -37,142 +43,72 @@ const processSteps = [
     description:
       "Continuous improvement is at the core of my process. I rigorously test designs through multiple methodologies, ensuring every interaction is purposeful.",
     colorClass: "turquoise",
+    accentColor: "#00d7ff",
+    svgSrc: "/assets/imgs/Process/4.svg",
   },
 ];
 
-const svgRotations = [
-  [1, 2, 3, 4],
-  [2, 3, 4, 1],
-  [3, 4, 1, 2],
-  [4, 1, 2, 3],
-];
+// Arc position configs by offset from active card (mod 4).
+// x is in px, applied by GSAP.
+const ARC = [
+  { x: 0,    scale: 1.00, opacity: 1.00 }, // offset 0 = center (active)
+  { x: 260,  scale: 0.72, opacity: 0.55 }, // offset 1 = near-right
+  { x: 520,  scale: 0.50, opacity: 0.20 }, // offset 2 = far-right
+  { x: -260, scale: 0.72, opacity: 0.55 }, // offset 3 = near-left
+] as const;
 
 const Process = () => {
   const sectionRef = useRef<HTMLElement>(null);
-  const masterTimelineRef = useRef<gsap.core.Timeline | null>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
+  const dotRefs  = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
+  const entranceTlRef    = useRef<gsap.core.Timeline | null>(null);
+  const gsapCtxRef       = useRef<gsap.Context | null>(null);
+  const activeIndexRef   = useRef(0);
+  const autoPlayRunning  = useRef(false);
+  const startAutoPlayRef = useRef<(() => void) | null>(null);
+  const stopAutoPlayRef  = useRef<(() => void) | null>(null);
 
-  const localProgress = useSectionProgress(3, 0.7); // Process is index 3, delayed until 70% approaching
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-
-    const ctx = gsap.context(() => {
-      // Initial state
-      gsap.set('.process-card', { opacity: 0, scale: 0.9, y: 30 });
-
-      const entranceTl = gsap.timeline({ paused: true });
-      entranceTl.to('.process-card', {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        duration: 1,
-        stagger: 0.1,
-        ease: 'power2.out'
-      });
-
-      // Sync entrance with scroll
-      entranceTl.progress(localProgress);
-
-      // SVG Rotation Logic
-      processSteps.forEach((_, cardIndex) => {
-        for (let svgNum = 1; svgNum <= 4; svgNum++) {
-          const isVisible = svgNum === cardIndex + 1;
-          gsap.set(`.card-${cardIndex + 1} .svg-${svgNum}`, {
-            opacity: isVisible ? 1 : 0,
-          });
-        }
-      });
-
-      const tl = gsap.timeline({
-        repeat: -1,
-        paused: true,
-        defaults: { ease: 'power1.inOut' },
-      });
-      masterTimelineRef.current = tl;
-
-      svgRotations.forEach((rotation, idx) => {
-        if (idx === 0) return;
-        const prev = svgRotations[idx - 1];
-        tl.add(() => {
-          processSteps.forEach((_, cardIndex) => {
-            const fromSvg = prev[cardIndex];
-            const toSvg = rotation[cardIndex];
-            gsap.to(`.card-${cardIndex + 1} .svg-${fromSvg}`, {
-              opacity: 0,
-              duration: 1.5,
-            });
-            gsap.to(`.card-${cardIndex + 1} .svg-${toSvg}`, {
-              opacity: 1,
-              duration: 1.5,
-              delay: 0.5,
-            });
-          });
-        }).to({}, { duration: 4 });
-      });
-
-      masterTimelineRef.current
-        .add(() => {
-          const prev = svgRotations[3];
-          const next = svgRotations[0];
-          processSteps.forEach((_, cardIndex) => {
-            const fromSvg = prev[cardIndex];
-            const toSvg = next[cardIndex];
-            gsap.to(`.card-${cardIndex + 1} .svg-${fromSvg}`, {
-              opacity: 0,
-              duration: 1.5,
-            });
-            gsap.to(`.card-${cardIndex + 1} .svg-${toSvg}`, {
-              opacity: 1,
-              duration: 1.5,
-              delay: 0.5,
-            });
-          });
-        })
-        .to({}, { duration: 4 });
-
-      // Autonomous trigger for SVG timeline when section is docked
-      if (localProgress > 0.7 && !masterTimelineRef.current?.isActive()) {
-        masterTimelineRef.current?.play();
-      } else if (localProgress < 0.2) {
-        masterTimelineRef.current?.pause();
-      }
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-      masterTimelineRef.current?.kill();
-    };
-  }, [localProgress]);
+  const localProgress = useSectionProgress(3, 0.7);
 
   return (
     <section id="process" className="process-section" ref={sectionRef}>
-      <div className="process-container">
-        <div className="process-grid">
-          {processSteps.map((step, i) => (
-            <div key={step.id} className={`process-card card-${i + 1} process-card-${step.id}`}>
-              <div className="process-svg-wrap" style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 1 }} className="process-card-svg svg-1">
-                  <Image src="/assets/imgs/Process/1.svg" alt="" fill style={{ objectFit: 'contain' }} />
-                </div>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0 }} className="process-card-svg svg-2">
-                  <Image src="/assets/imgs/Process/2.svg" alt="" fill style={{ objectFit: 'contain' }} />
-                </div>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0 }} className="process-card-svg svg-3">
-                  <Image src="/assets/imgs/Process/3.svg" alt="" fill style={{ objectFit: 'contain' }} />
-                </div>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0 }} className="process-card-svg svg-4">
-                  <Image src="/assets/imgs/Process/4.svg" alt="" fill style={{ objectFit: 'contain' }} />
-                </div>
-              </div>
+      <div className="process-arc-container">
+        {processSteps.map((step, i) => (
+          <div
+            key={step.id}
+            ref={(el) => { cardRefs.current[i] = el; }}
+            className={`process-card process-arc-card process-card-${step.id}`}
+          >
+            <div className="process-svg-wrap" style={{ position: 'relative' }}>
+              <Image
+                src={step.svgSrc}
+                alt=""
+                fill
+                style={{ objectFit: 'contain' }}
+              />
+            </div>
 
-              <div className="process-card-content">
+            <div className="process-card-content">
+              <div className="process-card-title-group">
                 <h3 className={`${step.colorClass} neon body-title-3`}>{step.title}</h3>
                 <p className="body-2">{step.subtitle}</p>
+              </div>
+              <div className="process-desc-wrap">
                 <p className="footnote">{step.description}</p>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="process-step-indicators">
+        {processSteps.map((_, i) => (
+          <div
+            key={i}
+            ref={(el) => { dotRefs.current[i] = el; }}
+            className="process-step-dot"
+          />
+        ))}
       </div>
     </section>
   );
