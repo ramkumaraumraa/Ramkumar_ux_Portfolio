@@ -20,22 +20,29 @@ const PHASE_OFFSETS = [0, Math.PI * 0.5, Math.PI, Math.PI * 1.5];
 const WIRE_PAIRS: [number, number][] = [[0,1],[1,2],[2,3],[3,0]];
 
 export function ProcessScene() {
-  const localProgress  = useSectionProgress(3);
-  const activeNodeRef  = useRef(0);
+  const localProgress     = useSectionProgress(3);
+  const localProgressRef  = useRef(0);
+  const activeNodeRef     = useRef(0);
 
   const nodeRefs = useRef<(THREE.Mesh | null)[]>([null, null, null, null]);
   const tubeRefs = useRef<(THREE.Mesh | null)[]>([null, null, null, null]);
 
-  // Listen for card transitions from Process.tsx
+  // Mirror localProgress into a ref so useFrame always reads the latest value
+  // without depending on render-closure capture (safe under React.memo / StrictMode)
+  useEffect(() => { localProgressRef.current = localProgress; }, [localProgress]);
+
+  // Listen for card transitions dispatched by Process.tsx
   useEffect(() => {
     const handler = (e: Event) => {
-      activeNodeRef.current = (e as CustomEvent<{ index: number }>).detail.index;
+      const detail = (e as CustomEvent<{ index: number }>).detail;
+      if (detail == null || typeof detail.index !== 'number') return;
+      activeNodeRef.current = detail.index;
     };
     window.addEventListener('process-active-card', handler);
     return () => window.removeEventListener('process-active-card', handler);
   }, []);
 
-  // Build tube geometries once
+  // Build tube geometries once — WIRE_PAIRS is a module-level constant, empty dep is correct
   const tubeGeometries = useMemo(() => {
     return WIRE_PAIRS.map(([a, b]) => {
       const pA = new THREE.Vector3(...DIAMOND_POSITIONS[a]);
@@ -45,9 +52,15 @@ export function ProcessScene() {
     });
   }, []);
 
+  // Dispose geometries on unmount to avoid GPU memory leaks
+  useEffect(() => {
+    return () => { tubeGeometries.forEach(g => g.dispose()); };
+  }, [tubeGeometries]);
+
   useFrame((state) => {
     const active = activeNodeRef.current;
-    const t = state.clock.elapsedTime;
+    const lp     = localProgressRef.current;
+    const t      = state.clock.elapsedTime;
 
     nodeRefs.current.forEach((mesh, i) => {
       if (!mesh) return;
@@ -66,10 +79,10 @@ export function ProcessScene() {
       const targetEmissive = isActive ? 3.5 : 0.6;
       mat.emissiveIntensity += (targetEmissive - mat.emissiveIntensity) * 0.06;
 
-      // Scale: entrance lerp toward localProgress, plus pulse beat on active node
+      // Scale: entrance lerp toward lp, plus 1.5 Hz sin beat on active node only
       const beatScale = isActive
-        ? localProgress * (1 + Math.sin(t * 1.5 * Math.PI * 2) * 0.10)
-        : localProgress;
+        ? lp * (1 + Math.sin(t * 1.5 * Math.PI * 2) * 0.10)
+        : lp;
       mesh.scale.setScalar(mesh.scale.x + (beatScale - mesh.scale.x) * 0.08);
     });
 
@@ -79,9 +92,7 @@ export function ProcessScene() {
       const mat = mesh.material as THREE.MeshStandardMaterial;
       const isAdjacent =
         WIRE_PAIRS[i][0] === active || WIRE_PAIRS[i][1] === active;
-      const targetOpacity = isAdjacent
-        ? 0.9 * localProgress
-        : 0.4 * localProgress;
+      const targetOpacity = isAdjacent ? 0.9 * lp : 0.4 * lp;
       mat.opacity += (targetOpacity - mat.opacity) * 0.06;
     });
   });
@@ -105,7 +116,7 @@ export function ProcessScene() {
         </mesh>
       ))}
 
-      {/* Wire connectors */}
+      {/* Wire connectors — depthWrite disabled to prevent z-fighting on transparent thin geometry */}
       {tubeGeometries.map((geom, i) => (
         <mesh
           key={`tube-${i}`}
@@ -117,6 +128,7 @@ export function ProcessScene() {
             emissive="#94a3b8"
             emissiveIntensity={0.4}
             transparent
+            depthWrite={false}
             opacity={0}
           />
         </mesh>
