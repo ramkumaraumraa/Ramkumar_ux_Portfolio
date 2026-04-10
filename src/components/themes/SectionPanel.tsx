@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 interface SectionPanelProps {
@@ -18,6 +18,12 @@ interface SectionPanelProps {
 export function SectionPanel({ sectionIndex, children }: SectionPanelProps) {
   const localProgress = useSectionProgress(sectionIndex);
   const [isMobile, setIsMobile] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const localProgressRef = useRef(localProgress);
+
+  useEffect(() => {
+    localProgressRef.current = localProgress;
+  }, [localProgress]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -26,7 +32,30 @@ export function SectionPanel({ sectionIndex, children }: SectionPanelProps) {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  const isDocked = localProgress > 0.85;
+  useEffect(() => {
+    if (isMobile) return;
+    
+    const handleCameraSync = (e: Event) => {
+      if (!overlayRef.current) return;
+      const { rotX, rotY, rotZ } = (e as CustomEvent).detail;
+      const lp = localProgressRef.current;
+      
+      // Map progress to distance (-Z means deeper into the screen)
+      const translateZ = (lp - 1) * 600; 
+      
+      // Apply the exact inverse of the camera rotation to simulate 3D presence
+      const rx = -rotX;
+      const ry = -rotY;
+      const rz = -rotZ;
+
+      overlayRef.current.style.transform = `perspective(1000px) translateZ(${translateZ}px) rotateX(${rx}rad) rotateY(${ry}rad) rotateZ(${rz}rad)`;
+    };
+    
+    window.addEventListener('camera-sync', handleCameraSync);
+    return () => window.removeEventListener('camera-sync', handleCameraSync);
+  }, [isMobile]);
+
+  const isDocked = localProgress > 0.98; // Very close to full stop
 
   if (localProgress <= 0) return null;
 
@@ -36,11 +65,11 @@ export function SectionPanel({ sectionIndex, children }: SectionPanelProps) {
       position: 'fixed',
       inset: 0,
       zIndex: 10,
-      opacity: localProgress,
+      opacity: isDocked ? 1 : 0,
+      transition: 'opacity 0.8s ease-out',
       pointerEvents: isDocked ? 'auto' : 'none',
       overflowY: 'auto',
       WebkitOverflowScrolling: 'touch',
-      willChange: 'opacity',
     };
 
     return (
@@ -48,37 +77,36 @@ export function SectionPanel({ sectionIndex, children }: SectionPanelProps) {
         className="section-panel-overlay"
         style={mobileOverlayStyle}
       >
-        {/* Padding keeps the last touch targets clear of the fixed dock. */}
-        <div style={{ minHeight: '100%', paddingBottom: 112 }}>
+        <div className="section-panel-viewport section-panel-viewport--mobile">
           {children}
         </div>
       </div>
     );
   }
 
-  // ── Desktop: scale + Y-translate camera-approach entrance ──────
-  const eased = 1 - Math.pow(1 - localProgress, 3);
-  const scale = 0.3 + eased * 0.7;
-  const translateY = (1 - localProgress) * 40;
-
+  // ── Desktop: 3D traveling sliding effect instead of scale zoom ──────
+  // The transform is managed dynamically by the camera-sync event above!
+  
   return (
     <div
+      ref={overlayRef}
       className="section-panel-overlay"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 10,
-        opacity: localProgress,
-        transform: `translateY(${translateY}px) scale(${scale})`,
+        opacity: isDocked ? 1 : 0, 
+        transition: 'opacity 0.8s ease-out',
         pointerEvents: isDocked ? 'auto' : 'none',
-        willChange: 'transform, opacity',
+        willChange: 'transform',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
+        transformStyle: 'preserve-3d',
       }}
     >
-      <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      <div className="section-panel-viewport">
         {children}
       </div>
     </div>

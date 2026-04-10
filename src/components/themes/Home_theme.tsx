@@ -201,7 +201,13 @@ export default function HomeTheme({
   const scale = responsive.isMobile ? 0.7 : 1;
 
   return (
-    <mesh ref={meshRef} scale={[viewport.width * scale, viewport.height * scale, 1]} position={[0, 0, -5]}>
+    <mesh 
+      ref={meshRef} 
+      scale={[viewport.width * scale, viewport.height * scale, 1]} 
+      position={[0, 0, -5]}
+      frustumCulled={false}
+      renderOrder={-10}
+    >
       <planeGeometry args={[2, 2]} />
       <primitive object={shaderMaterial} />
     </mesh>

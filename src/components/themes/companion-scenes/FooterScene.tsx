@@ -3,7 +3,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { SECTION_Z_POSITIONS } from '@/lib/scrollConstants';
+import { SPLINE_POINTS } from '@/lib/scrollConstants';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 const RAIN_VERT = `
@@ -92,7 +92,7 @@ export function FooterScene() {
   if (localProgress === 0) return null;
 
   return (
-    <group position={[0, 0, SECTION_Z_POSITIONS[4]]}>
+    <group position={SPLINE_POINTS[4]}>
       {/* Rain — slate-200, fast fall */}
       <points geometry={rainGeo}>
         <shaderMaterial

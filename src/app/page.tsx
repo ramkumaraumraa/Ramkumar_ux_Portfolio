@@ -10,6 +10,9 @@ import Cursor from '../components/Cursor';
 import Navbar from '../components/Navbar';
 import Background from '../components/themes/Background';
 import { SectionPanel } from '../components/themes/SectionPanel';
+import SectionChrome from '../components/themes/SectionChrome';
+import SectionOverlay from '../components/themes/SectionOverlay';
+import HomeOverlay from '../components/themes/HomeOverlay';
 
 const Orchestrator = dynamic(() => import('../components/themes/Orchestrator'), { ssr: false });
 const HomeSection    = dynamic(() => import('../components/sections/Home'),    { ssr: false });
@@ -37,6 +40,8 @@ export default function Page() {
   const scrollProgressRef = useRef(0);   // 0-1
   const rafIdRef          = useRef<number>(0);
   const touchStartY       = useRef(0);
+  const isNavJumpRef      = useRef(false);
+  const [mobileSwipeCue, setMobileSwipeCue] = useState<'up' | 'down' | null>(null);
 
   const [responsive, setResponsive] = useState({ isMobile: false, isTablet: false });
 
@@ -115,11 +120,17 @@ export default function Page() {
         }
       }
 
-      const dynamicEase = isNearDock ? 0.025 : 0.07;
+      const isTargetMet = Math.abs(diff) < 0.1;
+      if (isTargetMet && isNavJumpRef.current) {
+        isNavJumpRef.current = false;
+      }
+
+      // Slower dynamic ease if it's a navigation jump
+      const dynamicEase = isNavJumpRef.current ? 0.03 : (isNearDock ? 0.025 : 0.07);
       virtualScrollRef.current += diff * dynamicEase;
       virtualScrollRef.current = ((virtualScrollRef.current % VIRTUAL_MAX) + VIRTUAL_MAX) % VIRTUAL_MAX;
 
-      if (Math.abs(diff) < 0.1) {
+      if (isTargetMet) {
         virtualScrollRef.current = targetScrollRef.current;
       }
 
@@ -128,7 +139,12 @@ export default function Page() {
 
       if (progress !== scrollProgressRef.current || Math.abs(rawDelta) > 0.01) {
         scrollProgressRef.current = progress;
-        updateSection(progress);
+        
+        // Only dynamically track sections if we aren't warping. Warping locks the destination early.
+        if (!isNavJumpRef.current) {
+          updateSection(progress);
+        }
+        
         ScrollTrigger.update();
 
         const now = Date.now();
@@ -147,7 +163,8 @@ export default function Page() {
             progress,
             scroll: virtualScrollRef.current,
             velocity,
-            direction: rawDelta >= 0 ? 1 : -1
+            direction: rawDelta >= 0 ? 1 : -1,
+            isJumping: isNavJumpRef.current
           }
         }));
 
@@ -223,12 +240,20 @@ export default function Page() {
           // At a scroll boundary — hand off to virtual section navigation.
           e.preventDefault();
           targetScrollRef.current += dy * TOUCH_MULT;
+          
+          // Show visual cue for mobile
+          setMobileSwipeCue(dy > 0 ? 'down' : 'up');
+          setTimeout(() => setMobileSwipeCue(null), 800);
         }
         // else: content not at edge, let native scrolling handle it.
       } else {
         // Not inside any scrollable element — drive virtual navigation.
         e.preventDefault();
         targetScrollRef.current += dy * TOUCH_MULT;
+        
+        // Show visual cue for mobile
+        setMobileSwipeCue(dy > 0 ? 'down' : 'up');
+        setTimeout(() => setMobileSwipeCue(null), 800);
       }
     };
 
@@ -250,6 +275,7 @@ export default function Page() {
     if (idx < 0) return;
     targetScrollRef.current = SECTION_DOCK_PROGRESS[idx] * VIRTUAL_MAX;
     setActiveSection(tab);
+    isNavJumpRef.current = true;
   }, []);
 
   useEffect(() => {
@@ -274,6 +300,32 @@ export default function Page() {
   return (
     <>
       {!loaderComplete && <Loader onComplete={handleLoaderComplete} />}
+
+      {/* Mobile Swipe Edge Cue */}
+      {mobileSwipeCue && responsive.isMobile && (
+        <div style={{
+          position: 'fixed',
+          top: mobileSwipeCue === 'up' ? '20px' : 'auto',
+          bottom: mobileSwipeCue === 'down' ? '80px' : 'auto',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(8px)',
+          padding: '8px 16px',
+          borderRadius: '20px',
+          color: '#fff',
+          fontSize: '12px',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          animation: 'fadeInOut 0.8s ease-out forwards',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          {mobileSwipeCue === 'down' ? 'Warping Next ↓' : 'Warping Prev ↑'}
+        </div>
+      )}
 
       {/* Preload WebGL while loader is still showing */}
       {preparingExit && !loaderComplete && (
@@ -314,12 +366,13 @@ export default function Page() {
             />
           </div>
 
+          {/* ── Home overlay: persistent neon text ── */}
+          <HomeOverlay activeSection={activeSection} />
+
           {/* ── Section overlays: Unified CSS proximity system ── */}
-          <SectionPanel sectionIndex={0}><HomeSection /></SectionPanel>
-          <SectionPanel sectionIndex={1}><WorksSection /></SectionPanel>
-          <SectionPanel sectionIndex={2}><AboutSection /></SectionPanel>
-          <SectionPanel sectionIndex={3}><ProcessSection /></SectionPanel>
-          <SectionPanel sectionIndex={4}><FooterSection /></SectionPanel>
+          <SectionOverlay activeSection={activeSection} />
+
+          <SectionChrome activeSection={activeSection} />
 
           {/* ── Navbar ── */}
           <Navbar

@@ -1,9 +1,33 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
+
+const DESKTOP_POSITIONS = [
+  { xPercent: -170, yPercent: -10, rotate: -15, scale: 0.88, zIndex: 1 },
+  { xPercent: -85,  yPercent: 15,  rotate: -7,  scale: 0.95, zIndex: 2 },
+  { xPercent: 0,    yPercent: 0,   rotate: 0,   scale: 1,    zIndex: 5 },
+  { xPercent: 85,   yPercent: -15, rotate: 7,   scale: 0.95, zIndex: 3 },
+  { xPercent: 170,  yPercent: 10,  rotate: 15,  scale: 0.88, zIndex: 4 },
+];
+
+const TABLET_POSITIONS = [
+  { xPercent: -85, yPercent: -15, rotate: -12, scale: 0.85, zIndex: 1 },
+  { xPercent: -40, yPercent: 10,  rotate: -6,  scale: 0.95, zIndex: 2 },
+  { xPercent: 0,   yPercent: 0,   rotate: 0,   scale: 1,    zIndex: 5 },
+  { xPercent: 40,  yPercent: -10, rotate: 6,   scale: 0.95, zIndex: 3 },
+  { xPercent: 85,  yPercent: 15,  rotate: 12,  scale: 0.85, zIndex: 4 },
+];
+
+const MOBILE_POSITIONS = [
+  { xPercent: -10, yPercent: -70, rotate: -8, scale: 0.85, zIndex: 1 },
+  { xPercent: 15,  yPercent: -35, rotate: -4, scale: 0.9,  zIndex: 2 },
+  { xPercent: 0,   yPercent: 0,   rotate: 0,   scale: 1,    zIndex: 5 },
+  { xPercent: -15, yPercent: 35,  rotate: 4,   scale: 0.9,  zIndex: 3 },
+  { xPercent: 10,  yPercent: 70,  rotate: 8,   scale: 0.85, zIndex: 4 },
+];
 
 const Works = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -48,41 +72,14 @@ const Works = () => {
     },
   ];
 
-  // Desktop Positions (Wide X spread)
-  const fannedPositions = [
-    { xPercent: -170, yPercent: -10, rotate: -15, scale: 0.88, zIndex: 1 },
-    { xPercent: -85,  yPercent: 15,  rotate: -7,  scale: 0.95, zIndex: 2 },
-    { xPercent: 0,    yPercent: 0,   rotate: 0,   scale: 1,    zIndex: 5 },
-    { xPercent: 85,   yPercent: -15, rotate: 7,   scale: 0.95, zIndex: 3 },
-    { xPercent: 170,  yPercent: 10,  rotate: 15,  scale: 0.88, zIndex: 4 },
-  ];
+  const getPositions = useCallback(() => {
+    if (typeof window === 'undefined') return DESKTOP_POSITIONS;
+    if (window.innerWidth <= 768) return MOBILE_POSITIONS;
+    if (window.innerWidth <= 1024) return TABLET_POSITIONS;
+    return DESKTOP_POSITIONS;
+  }, []);
 
-  // Tablet Positions (Tighter X-spread for 768-1024px)
-  const tabletPositions = [
-    { xPercent: -85, yPercent: -15, rotate: -12, scale: 0.85, zIndex: 1 },
-    { xPercent: -40, yPercent: 10,  rotate: -6,  scale: 0.95, zIndex: 2 },
-    { xPercent: 0,   yPercent: 0,   rotate: 0,   scale: 1,    zIndex: 5 },
-    { xPercent: 40,  yPercent: -10, rotate: 6,   scale: 0.95, zIndex: 3 },
-    { xPercent: 85,  yPercent: 15,  rotate: 12,  scale: 0.85, zIndex: 4 },
-  ];
-
-  // Mobile Positions (Tighter Y-cascade, minimal X-spread so they fit on screen!)
-  const mobilePositions = [
-    { xPercent: -10, yPercent: -70, rotate: -8, scale: 0.85, zIndex: 1 },
-    { xPercent: 15,  yPercent: -35, rotate: -4, scale: 0.9,  zIndex: 2 },
-    { xPercent: 0,   yPercent: 0,   rotate: 0,   scale: 1,    zIndex: 5 },
-    { xPercent: -15, yPercent: 35,  rotate: 4,   scale: 0.9,  zIndex: 3 },
-    { xPercent: 10,  yPercent: 70,  rotate: 8,   scale: 0.85, zIndex: 4 },
-  ];
-
-  const getPositions = () => {
-    if (typeof window === 'undefined') return fannedPositions;
-    if (window.innerWidth <= 768) return mobilePositions;
-    if (window.innerWidth <= 1024) return tabletPositions;
-    return fannedPositions;
-  };
-
-  const localProgress = useSectionProgress(1); // Works is index 1
+  const localProgress = useSectionProgress(1, 0.7); // Works is index 1, delay text reveal until 70% approaching
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -124,7 +121,7 @@ const Works = () => {
     return () => {
       tl.kill();
     };
-  }, [localProgress]);
+  }, [getPositions, localProgress]);
 
   const handleMouseEnter = (index: number) => {
     const card = cardRefs.current[index];
@@ -177,17 +174,13 @@ const Works = () => {
   };
 
   return (
-    <div id="works" className="relative">
-      <div className="section-sticky-label">
-        <h5 className="turquoise h5 neon">SELECTED WORKS</h5>
-      </div>
-
+    <div id="works" className="relative h-full">
       <section
-        className="relative w-full min-h-[100vh] pt-8 pb-16 flex flex-col items-center justify-start overflow-hidden"
+        className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden"
         ref={sectionRef}
       >
       <div
-        className="relative w-full h-[75vh] flex items-center justify-center"
+        className="relative w-full h-full flex items-center justify-center"
         ref={containerRef}
       >
         {cardData.map((card, index) => (

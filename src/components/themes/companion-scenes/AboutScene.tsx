@@ -3,7 +3,7 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { SECTION_Z_POSITIONS } from '@/lib/scrollConstants';
+import { SPLINE_POINTS } from '@/lib/scrollConstants';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 /**
@@ -17,8 +17,12 @@ export function AboutScene() {
   const ring1Ref = useRef<THREE.Mesh>(null);
   const ring2Ref = useRef<THREE.Mesh>(null);
   const ring3Ref = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
-  useFrame(() => {
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.2;
+    }
     if (!ring1Ref.current || !ring2Ref.current || !ring3Ref.current) return;
 
     ring1Ref.current.rotation.z += 0.008;
@@ -35,7 +39,7 @@ export function AboutScene() {
   if (localProgress === 0) return null;
 
   return (
-    <group position={[0, 0, SECTION_Z_POSITIONS[2]]}>
+    <group ref={groupRef} position={SPLINE_POINTS[2]}>
       {/* Ring 1 — cyan, outer, rotates Z */}
       <mesh ref={ring1Ref}>
         <torusGeometry args={[4, 0.015, 16, 120]} />

@@ -23,7 +23,7 @@ export function ScenePostProcessing({ currentSection = 'home' }: ScenePostProces
   );
 
   return (
-    <EffectComposer>
+    <EffectComposer multisampling={0}>
       <Bloom
         intensity={fx.bloom}
         luminanceThreshold={0.8}

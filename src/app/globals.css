@@ -29,6 +29,8 @@
 :root {
   --background: #020c1b;
   --foreground: #ffffff;
+  --section-shell-top-pad: 110px;
+  --section-shell-bottom-pad: 126px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -63,4 +65,25 @@ body {
 .section-sticky-label--full {
   width: 100vw;
   margin-left: calc(-50vw + 50%);
+}
+
+.section-panel-viewport {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  box-sizing: border-box;
+  padding-top: var(--section-shell-top-pad);
+  padding-bottom: var(--section-shell-bottom-pad);
+}
+
+.section-panel-viewport--mobile {
+  min-height: 100%;
+  height: auto;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --section-shell-top-pad: calc(84px + env(safe-area-inset-top));
+    --section-shell-bottom-pad: calc(104px + env(safe-area-inset-bottom));
+  }
 }

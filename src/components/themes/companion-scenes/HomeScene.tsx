@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
-import { SECTION_Z_POSITIONS } from '@/lib/scrollConstants';
+import { SPLINE_POINTS } from '@/lib/scrollConstants';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 /**
@@ -41,12 +41,17 @@ export function HomeScene() {
     return pos;
   });
 
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    groupRef.current.position.y = Math.sin(state.clock.elapsedTime) * 0.15;
+  });
+
   if (localProgress === 0) return null;
 
   const opacity = localProgress;
 
   return (
-    <group ref={groupRef} position={[0, 0, SECTION_Z_POSITIONS[0]]}>
+    <group ref={groupRef} position={SPLINE_POINTS[0]}>
       <OuterRing
         outerRef={outerRef}
         positions={outerPositions}

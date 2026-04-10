@@ -11,8 +11,9 @@ import { SECTION_Z_POSITIONS, TOTAL_DEPTH, VISIBLE_RANGE } from '@/lib/scrollCon
  * - 1: Camera is exactly docked (Section is fully visible and interactive).
  * 
  * @param sectionIndex The index of the section in SECTION_IDS (0=home, 1=works, etc.)
+ * @param delayRatio Optional ratio (0 to 1) of the VISIBLE_RANGE to wait before progress begins. Use for DOM HTML to reveal later than 3D backgrounds.
  */
-export function useSectionProgress(sectionIndex: number): number {
+export function useSectionProgress(sectionIndex: number, delayRatio: number = 0): number {
   const [localProgress, setLocalProgress] = useState(0);
 
   useEffect(() => {
@@ -31,8 +32,14 @@ export function useSectionProgress(sectionIndex: number): number {
       // would incorrectly equate home (Z=0) with footer (Z=-60).
       const distance = Math.abs(cameraZ - dockZ);
       
-      // Map distance to 0-1 progress (within VISIBLE_RANGE)
-      const currentLocal = Math.max(0, 1 - distance / VISIBLE_RANGE);
+      // Map distance to a raw 0-1 progress
+      const rawLocal = Math.max(0, 1 - distance / VISIBLE_RANGE);
+      
+      // Delay the actual localProgress if delayRatio > 0
+      let currentLocal = rawLocal;
+      if (delayRatio > 0) {
+        currentLocal = Math.max(0, (rawLocal - delayRatio) / (1 - delayRatio));
+      }
       
       setLocalProgress(currentLocal);
     };

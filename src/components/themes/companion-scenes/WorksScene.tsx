@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { MeshDistortMaterial, Float } from '@react-three/drei';
-import { SECTION_Z_POSITIONS } from '@/lib/scrollConstants';
+import { SPLINE_POINTS } from '@/lib/scrollConstants';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 /**
@@ -15,7 +15,7 @@ export function WorksScene() {
   if (localProgress === 0) return null;
 
   return (
-    <group position={[0, 0, SECTION_Z_POSITIONS[1]]}>
+    <group position={SPLINE_POINTS[1]}>
       {/* fuchsia-500, desaturated */}
       <Float speed={1.8} rotationIntensity={0.8} floatIntensity={1.2}>
         <mesh position={[-5, 2.5, -2]}>

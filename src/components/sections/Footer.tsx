@@ -41,62 +41,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    if (!footerRef.current) return;
-
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ paused: true });
-
-      tl.fromTo('.footer-heading-plane', {
-        opacity: 0,
-        y: 36,
-      }, {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: 'power2.out',
-      }, 0);
-
-      tl.fromTo('.testimonial-card--featured', {
-        opacity: 0,
-        y: 48,
-        scale: 0.92,
-      }, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.9,
-        ease: 'power2.out',
-      }, 0.1);
-
-      tl.fromTo('.testimonial-card--side', {
-        opacity: 0,
-        y: 56,
-        scale: 0.9,
-      }, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.85,
-        stagger: 0.08,
-        ease: 'power2.out',
-      }, 0.18);
-
-      tl.fromTo('.footer-contact-panel, .footer-mobile-meta', {
-        opacity: 0,
-        y: 64,
-        scale: 0.96,
-      }, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.85,
-        ease: 'power2.out',
-      }, 0.42);
-
-      tl.progress(localProgress);
-    }, footerRef);
-
-    return () => ctx.revert();
+    // Removed GSAP carousel; now static 3D grid
   }, [localProgress]);
 
   return (
@@ -105,16 +50,19 @@ const Footer = () => {
         <p className="caption-text footer-heading-label">TESTIMONIALS</p>
       </div>
 
-      <div className="footer-testimonial-plane">
-        {featuredTestimonials.map((testimonial) => {
+      <div className="footer-testimonial-plane footer-3d-grid">
+        {featuredTestimonials.map((testimonial, index) => {
           const isFeatured = testimonial.variant === 'featured';
 
           return (
             <article
               key={testimonial.name}
-              className={`testimonial-card ${isFeatured ? 'testimonial-card--featured' : 'testimonial-card--side'} testimonial-card--${testimonial.variant}`}
+              className={`testimonial-card testimonial-card-3d testimonial-card--${testimonial.variant}`}
+              style={{
+                transform: `translateZ(${index * 20}px) rotateY(${index * 5}deg)`
+              }}
             >
-              <p className="body-2 testimonial-quote">“{testimonial.description}”</p>
+              <p className="body-2 testimonial-quote">"{testimonial.description}"</p>
 
               <div className="testimonial-card-footer">
                 <Image

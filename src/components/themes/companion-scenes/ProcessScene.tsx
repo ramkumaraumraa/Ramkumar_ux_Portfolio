@@ -3,7 +3,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { SECTION_Z_POSITIONS } from '@/lib/scrollConstants';
+import { SPLINE_POINTS } from '@/lib/scrollConstants';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 const DIAMOND_POSITIONS: [number, number, number][] = [
@@ -57,7 +57,7 @@ export function ProcessScene() {
   if (localProgress === 0) return null;
 
   return (
-    <group position={[0, 0, SECTION_Z_POSITIONS[3]]}>
+    <group position={SPLINE_POINTS[3]}>
       {/* Octahedron nodes */}
       {DIAMOND_POSITIONS.map((pos, i) => (
         <mesh key={i} ref={nodeRefs[i]} position={pos}>

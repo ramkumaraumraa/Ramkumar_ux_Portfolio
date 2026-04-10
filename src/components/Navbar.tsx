@@ -79,7 +79,9 @@ function Navbar({ activeTab = "home", setActiveTab = () => {} }: NavbarProps) {
       repeat: -1,
     } as gsap.TweenVars);
 
-    return () => tween.kill();
+    return () => {
+      tween.kill();
+    };
   }, []);
 
   useEffect(() => {

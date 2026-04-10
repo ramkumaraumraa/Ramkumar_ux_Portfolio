@@ -51,7 +51,7 @@ const Process = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const masterTimelineRef = useRef<gsap.core.Timeline | null>(null);
 
-  const localProgress = useSectionProgress(3); // Process is index 3
+  const localProgress = useSectionProgress(3, 0.7); // Process is index 3, delayed until 70% approaching
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -146,10 +146,6 @@ const Process = () => {
 
   return (
     <section id="process" className="process-section" ref={sectionRef}>
-      <div className="process-header section-sticky-label section-sticky-label--full">
-        <h5 className="pink h6 neon">Evolving Non-Linear Process</h5>
-      </div>
-
       <div className="process-container">
         <div className="process-grid">
           {processSteps.map((step, i) => (

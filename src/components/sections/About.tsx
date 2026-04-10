@@ -11,8 +11,7 @@ const About = () => {
   const [hoveredExpertise, setHoveredExpertise] = useState<number | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipPlacement, setTooltipPlacement] = useState("right");
-  const [mounted, setMounted] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true);
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
 
   const expertiseData = [
@@ -36,17 +35,16 @@ const About = () => {
 
   // Detect desktop vs mobile
   useEffect(() => {
-    setMounted(true);
     const check = () => setIsDesktop(window.innerWidth >= 1024);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  const localProgress = useSectionProgress(2); // About is index 2
+  const localProgress = useSectionProgress(2, 0.7); // About is index 2, delay text reveal until 70% approaching
 
   useEffect(() => {
-    if (!aboutRef.current || !mounted) return;
+    if (!aboutRef.current || isDesktop === null) return;
 
     gsapContextRef.current = gsap.context(() => {
       const tl = gsap.timeline({ paused: true });
@@ -55,7 +53,11 @@ const About = () => {
       tl.fromTo('.about-left', { scale: 0.95, opacity: 0, x: -24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
       tl.fromTo('.about-right', { scale: 0.95, opacity: 0, x: 24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
       tl.fromTo('.stat-item', { scale: 0.8, opacity: 0, y: 20 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.8, stagger: 0.1 }, 0.2);
-      tl.fromTo('.expertise-item', { scale: 0.9, opacity: 0, y: 16 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.6, stagger: 0.05 }, 0.4);
+      
+      const targetClass = isDesktop ? '.expertise-item' : '.expertise-accordion-item';
+      if (document.querySelectorAll(targetClass).length > 0) {
+        tl.fromTo(targetClass, { scale: 0.9, opacity: 0, y: 16 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.6, stagger: 0.05 }, 0.4);
+      }
 
       // Sync timeline with scroll progress
       tl.progress(localProgress);
@@ -66,7 +68,7 @@ const About = () => {
         gsapContextRef.current.revert();
       }
     };
-  }, [mounted, localProgress]);
+  }, [isDesktop, localProgress]);
 
   const handleStatMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
     gsap.to(e.currentTarget, { scale: 1.05, duration: 0.3, ease: 'back.out(2)' });
@@ -148,17 +150,19 @@ const About = () => {
   return (
     <section ref={aboutRef} id="about" className="about-expertise-section">
       <div className="about-left">
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1.2', overflow: 'hidden', borderRadius: '1rem' }} className="profile-image-container">
-          <Image
-            src="/assets/imgs/About/My Pic 1.png"
-            alt="Ramkumar - Senior Product Designer and UX Mentor"
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            quality={90}
-            style={{ objectFit: 'cover' }}
-            className="profile-image"
-            priority
-          />
+        <div className="profile-visual">
+          <div className="profile-image-container">
+            <Image
+              src="/assets/imgs/About/My Pic 1.png"
+              alt="Ramkumar - Senior Product Designer and UX Mentor"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 42vw, 32vw"
+              quality={90}
+              style={{ objectFit: 'contain', objectPosition: 'center top' }}
+              className="profile-image"
+              priority
+            />
+          </div>
         </div>
         <a
           href="/assets/imgs/About/Ramkumarux_Resume.pdf"
@@ -166,7 +170,6 @@ const About = () => {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Download Ramkumar's Resume PDF"
-          style={{ marginTop: '24px' }}
         >
           Download Resume
           <span></span>
@@ -178,7 +181,6 @@ const About = () => {
 
       <div className="about-right">
         <div className="about-header">
-          <h5 className="blue h5 neon">Hello I'm Ramkumar</h5>
           <p className="sub-header-1">Senior Product Designer and UX Mentor</p>
           <p className="sub-header-2">Based in Chennai, Tamil Nadu, India.</p>
           <p className="body-2 about-description">
@@ -221,7 +223,7 @@ const About = () => {
 
         <div className="expertise-section">
           {/* Desktop: grid with hover tooltip */}
-          {mounted && isDesktop && (
+          {isDesktop && (
             <div className="expertise-grid">
               {expertiseData.map((item, index) => (
                 <div
@@ -239,21 +241,29 @@ const About = () => {
           )}
 
           {/* Mobile: accordion */}
-          {mounted && !isDesktop && (
+          {isDesktop === false && (
             <div className="expertise-accordion-list">
               {expertiseData.map((item, index) => (
                 <div
                   key={index}
                   className={`expertise-accordion-item${activeAccordion === index ? ' active' : ''}`}
-                  onClick={() => toggleAccordion(index)}
                 >
-                  <div className="expertise-accordion-header">
+                  <button
+                    type="button"
+                    className="expertise-accordion-header"
+                    onClick={() => toggleAccordion(index)}
+                    aria-expanded={activeAccordion === index}
+                    aria-controls={`expertise-panel-${index}`}
+                  >
                     <span className="caption">{item.title}</span>
                     <span className="expertise-accordion-icon">
                       {activeAccordion === index ? '−' : '+'}
                     </span>
-                  </div>
-                  <div className="expertise-accordion-body">
+                  </button>
+                  <div
+                    id={`expertise-panel-${index}`}
+                    className="expertise-accordion-body"
+                  >
                     <p className="body-2">{item.description}</p>
                   </div>
                 </div>
@@ -264,7 +274,7 @@ const About = () => {
       </div>
 
       {/* Desktop tooltip */}
-      {mounted && isDesktop && hoveredExpertise !== null && (
+      {isDesktop && hoveredExpertise !== null && (
         <div
           className={`expertise-tooltip ${tooltipPlacement}`}
           style={{

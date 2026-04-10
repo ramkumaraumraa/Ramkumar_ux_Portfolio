@@ -43,7 +43,6 @@ export default function Orchestrator({
   });
   const [isIdle, setIsIdle] = useState(true);
   const [currentSection, setCurrentSection] = useState('home');
-  const [backgroundReady, setBackgroundReady] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
   
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -105,9 +104,7 @@ export default function Orchestrator({
     };
   }, [lenis, idleThresholdMs]);
 
-  const handleBackgroundReady = () => {
-    setBackgroundReady(true);
-  };
+
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -119,15 +116,13 @@ export default function Orchestrator({
   }, [canvasRef.current]);
 
   useEffect(() => {
-    if (backgroundReady && canvasReady) {
+    if (canvasReady) {
       window.dispatchEvent(new CustomEvent('orchestrator-ready'));
       document.body.classList.add('effects-ready');
     }
-  }, [backgroundReady, canvasReady]);
+  }, [canvasReady]);
 
   if (!enabled) return null;
-
-  if (!backgroundReady) return null; // Orchestrator depends on Background.tsx's Assets
 
   if (responsive.isMobile) {
     return null; // The background/overlays are handled in page.tsx for mobile
@@ -144,14 +139,13 @@ export default function Orchestrator({
         height: '100%',
         pointerEvents: 'none',
         zIndex: 1,
-        opacity: backgroundReady ? 1 : 0,
+        opacity: canvasReady ? 1 : 0,
         transition: 'opacity 0.6s ease-out'
       }}
     >
       {/* Background is now rendered at the root level in page.tsx */}
 
-      {backgroundReady && (
-        <Canvas
+      <Canvas
           ref={canvasRef}
           camera={{
             position: [0, 0, 0],
@@ -197,7 +191,6 @@ export default function Orchestrator({
             <Preload all />
           </Suspense>
         </Canvas>
-      )}
     </div>
   );
 }

@@ -20,22 +20,23 @@ export function Scenes({ scrollProgressRef }: { scrollProgressRef: React.Mutable
 
   useFrame(() => {
     const progress = scrollProgressRef.current;
-    const cameraZ = -progress * TOTAL_DEPTH;
 
-    // Visibility radius (units)
-    const renderRange = 12; 
+    // Visibility radius (units in T-space, total journey is 1.0)
+    // 0.2 means it stays visible +/- 20% of the entire scroll
+    const renderRange = 0.2; 
 
-    const getDist = (z: number) => {
-      const diff = Math.abs(cameraZ - z) % TOTAL_DEPTH;
-      return Math.min(diff, TOTAL_DEPTH - diff);
+    // Wrap-around distance logic for a circular scroll, assuming 0 and 1 connect (they almost do)
+    const getDist = (t: number) => {
+      const diff = Math.abs(progress - t) % 1.0;
+      return Math.min(diff, 1.0 - diff);
     };
 
     const newActive = [
       getDist(0) < renderRange,
-      getDist(-15) < renderRange,
-      getDist(-30) < renderRange,
-      getDist(-45) < renderRange,
-      getDist(-60) < renderRange,
+      getDist(0.25) < renderRange,
+      getDist(0.5) < renderRange,
+      getDist(0.75) < renderRange,
+      getDist(1.0) < renderRange,
     ];
 
     // Only update state if visibility changes to minimize re-renders

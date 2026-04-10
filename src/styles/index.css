@@ -937,6 +937,92 @@ html.lenis, html.lenis body {
 }
 
 /* Unified Bottom Dock */
+.section-chrome {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(920px, calc(100vw - 32px));
+  z-index: 900;
+  pointer-events: none;
+}
+
+.section-chrome__frame {
+  --section-chrome-accent: rgba(196, 210, 224, 0.42);
+  --section-chrome-title: rgba(242, 247, 252, 0.84);
+  --section-chrome-glow: rgba(196, 210, 224, 0.08);
+  position: relative;
+  min-height: 52px;
+  padding: 4px 16px;
+}
+
+.section-chrome__accent {
+  display: none;
+}
+
+.section-chrome__title-wrap {
+  position: relative;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 18px;
+}
+
+.section-chrome__title-wrap::before,
+.section-chrome__title-wrap::after {
+  content: none;
+}
+
+.section-chrome__title {
+  margin: 0;
+  color: var(--section-chrome-title);
+  font-family: 'Lexend Deca', sans-serif;
+  font-size: clamp(1.08rem, 1.25vw + 0.64rem, 1.48rem);
+  line-height: 1.1;
+  letter-spacing: 0.015em;
+  font-weight: 600;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  text-shadow:
+    0 0 6px var(--section-chrome-glow),
+    0 0 18px var(--section-chrome-glow),
+    0 0 36px color-mix(in srgb, var(--section-chrome-glow) 55%, transparent);
+}
+
+.section-chrome__char {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
+.section-chrome__placeholder {
+  width: 100%;
+  height: 24px;
+}
+
+.section-chrome--works .section-chrome__frame {
+  --section-chrome-accent: rgba(0, 255, 255, 0.42);
+  --section-chrome-title: rgba(180, 255, 255, 0.96);
+  --section-chrome-glow: rgba(0, 255, 255, 0.48);
+}
+
+.section-chrome--about .section-chrome__frame {
+  --section-chrome-accent: rgba(0, 162, 255, 0.42);
+  --section-chrome-title: rgba(190, 228, 255, 0.96);
+  --section-chrome-glow: rgba(0, 162, 255, 0.48);
+}
+
+.section-chrome--process .section-chrome__frame {
+  --section-chrome-accent: rgba(255, 147, 231, 0.42);
+  --section-chrome-title: rgba(255, 210, 245, 0.96);
+  --section-chrome-glow: rgba(255, 147, 231, 0.48);
+}
+
+.section-chrome--blank {
+  display: none;
+}
+
 .site-dock {
   position: fixed;
   left: 50%;
@@ -1338,6 +1424,35 @@ html.lenis, html.lenis body {
 }
 
 @media (max-width: 767px) {
+  .section-chrome {
+    top: max(10px, env(safe-area-inset-top));
+    width: calc(100vw - 16px);
+  }
+
+  .section-chrome__frame {
+    min-height: 42px;
+    padding: 4px 8px;
+  }
+
+  .section-chrome__title-wrap {
+    min-height: 26px;
+    padding-inline: 10px;
+  }
+
+  .section-chrome__title-wrap::before {
+    width: min(280px, 82vw);
+    height: 42px;
+  }
+
+  .section-chrome__title-wrap::after {
+    width: min(180px, 54vw);
+    height: 16px;
+  }
+
+  .section-chrome__title {
+    font-size: clamp(0.88rem, 1vw + 0.76rem, 1rem);
+  }
+
   .site-dock {
     bottom: max(10px, env(safe-area-inset-bottom));
     width: calc(100vw - 16px);
