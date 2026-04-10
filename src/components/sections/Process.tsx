@@ -70,70 +70,123 @@ const Process = () => {
 
   const localProgress = useSectionProgress(3, 0.7);
 
-  // ── Mount: build entrance timeline once ───────────────────
+  // ── Mount: entrance TL + auto-play ───────────────────────
   useEffect(() => {
     if (!sectionRef.current) return;
 
     gsapCtxRef.current = gsap.context(() => {
-      // ── 1. Initial arc positions (invisible) ──────────────
+      // ── Initial GSAP positions ────────────────────────────
       cardRefs.current.forEach((el, i) => {
         if (!el) return;
-        const pos = ARC[i]; // card 0=center, 1=near-right, 2=far-right, 3=near-left
+        const pos = ARC[i];
         gsap.set(el, { x: pos.x, scale: 0.4, opacity: 0, y: 80, filter: 'blur(12px)' });
       });
 
-      // ── 2. Description initial states ─────────────────────
-      // Card 0 (active) description open; others collapsed
       const descEls = cardRefs.current.map(el => el?.querySelector<HTMLElement>('.process-desc-wrap') ?? null);
       gsap.set(descEls[0], { height: 'auto', opacity: 1 });
       [1, 2, 3].forEach(i => gsap.set(descEls[i], { height: 0, opacity: 0 }));
 
-      // ── 3. Build paused entrance timeline ─────────────────
+      // ── Entrance timeline ─────────────────────────────────
       const q = gsap.utils.selector(sectionRef.current);
       const tl = gsap.timeline({ paused: true });
 
-      // Cards emerge from blur/depth into arc positions — staggered 0.08s
       cardRefs.current.forEach((el, i) => {
         if (!el) return;
         const pos = ARC[i];
         tl.to(el, {
-          x: pos.x,
-          scale: pos.scale,
-          opacity: pos.opacity,
-          y: 0,
-          filter: 'blur(0px)',
-          duration: 1.2,
-          ease: 'power3.out',
+          x: pos.x, scale: pos.scale, opacity: pos.opacity,
+          y: 0, filter: 'blur(0px)',
+          duration: 1.2, ease: 'power3.out',
         }, i * 0.08);
       });
 
-      // Internal parallax: 3 layers at different Y start offsets (deeper = less travel)
-      // SVG — slowest, feels deepest
       tl.fromTo(q('.process-svg-wrap'),
-        { y: 32 },
-        { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
-        0,
-      );
-      // Title group — baseline
+        { y: 32 }, { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 }, 0);
       tl.fromTo(q('.process-card-title-group'),
-        { y: 48 },
-        { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
-        0,
-      );
-      // Description text travels furthest — feels closest to viewer
+        { y: 48 }, { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 }, 0);
       tl.fromTo(q('.process-desc-wrap'),
-        { y: 64 },
-        { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
-        0,
-      );
+        { y: 64 }, { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 }, 0);
 
       entranceTlRef.current = tl;
 
-      // ── 4. Initial dot state ──────────────────────────────
-      const activeDot = dotRefs.current[0];
-      if (activeDot) {
-        gsap.set(activeDot, { width: 24, backgroundColor: processSteps[0].accentColor });
-      }
+      // ── Step dot updater ──────────────────────────────────
+      const updateDots = (idx: number) => {
+        dotRefs.current.forEach((dot, i) => {
+          if (!dot) return;
+          if (i === idx) {
+            gsap.to(dot, {
+              width: 24,
+              backgroundColor: processSteps[idx].accentColor,
+              duration: 0.4, ease: 'power2.out',
+            });
+          } else {
+            gsap.to(dot, {
+              width: 8,
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              duration: 0.3, ease: 'power2.out',
+            });
+          }
+        });
+      };
+
+      // Set initial dot — card 0 active
+      const d0 = dotRefs.current[0];
+      if (d0) gsap.set(d0, { width: 24, backgroundColor: processSteps[0].accentColor });
+
+      // ── Auto-play: advance one step ───────────────────────
+      let timerHandle: ReturnType<typeof setTimeout> | null = null;
+
+      const advance = () => {
+        const prev = activeIndexRef.current;
+        const next = (prev + 1) % 4;
+
+        const transitionTl = gsap.timeline({
+          onComplete: () => {
+            activeIndexRef.current = next;
+            window.dispatchEvent(
+              new CustomEvent('process-active-card', { detail: { index: next } })
+            );
+            updateDots(next);
+            schedule();
+          },
+        });
+
+        cardRefs.current.forEach((el, i) => {
+          if (!el) return;
+          const diff = ((i - next) % 4 + 4) % 4;
+          const pos = ARC[diff];
+          transitionTl.to(el, {
+            x: pos.x, scale: pos.scale, opacity: pos.opacity,
+            duration: 0.7, ease: 'power3.inOut',
+          }, 0);
+        });
+
+        const prevDesc = descEls[prev];
+        const nextDesc = descEls[next];
+        if (prevDesc) {
+          transitionTl.to(prevDesc, { height: 0, opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
+        }
+        if (nextDesc) {
+          transitionTl.to(nextDesc, { height: 'auto', opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.3);
+        }
+      };
+
+      const schedule = () => {
+        if (!autoPlayRunning.current) return;
+        timerHandle = setTimeout(advance, 3500);
+      };
+
+      // ── Expose start / stop via refs ──────────────────────
+      startAutoPlayRef.current = () => {
+        if (autoPlayRunning.current) return;
+        autoPlayRunning.current = true;
+        schedule();
+      };
+
+      stopAutoPlayRef.current = () => {
+        autoPlayRunning.current = false;
+        if (timerHandle) { clearTimeout(timerHandle); timerHandle = null; }
+      };
     }, sectionRef);
 
     return () => {
@@ -142,7 +195,7 @@ const Process = () => {
       gsapCtxRef.current = null;
       entranceTlRef.current = null;
     };
-  }, []); // Mount only — no deps
+  }, []); // mount only
 
   // ── localProgress: scrub entrance TL + start/stop autoplay ─
   useEffect(() => {
