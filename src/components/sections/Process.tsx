@@ -70,6 +70,90 @@ const Process = () => {
 
   const localProgress = useSectionProgress(3, 0.7);
 
+  // ── Mount: build entrance timeline once ───────────────────
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    gsapCtxRef.current = gsap.context(() => {
+      // ── 1. Initial arc positions (invisible) ──────────────
+      cardRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const pos = ARC[i]; // card 0=center, 1=near-right, 2=far-right, 3=near-left
+        gsap.set(el, { x: pos.x, scale: 0.4, opacity: 0, y: 80, filter: 'blur(12px)' });
+      });
+
+      // ── 2. Description initial states ─────────────────────
+      // Card 0 (active) description open; others collapsed
+      const descEls = cardRefs.current.map(el => el?.querySelector<HTMLElement>('.process-desc-wrap'));
+      gsap.set(descEls[0], { height: 'auto', opacity: 1 });
+      [1, 2, 3].forEach(i => gsap.set(descEls[i], { height: 0, opacity: 0 }));
+
+      // ── 3. Build paused entrance timeline ─────────────────
+      const tl = gsap.timeline({ paused: true });
+
+      // Cards emerge from blur/depth into arc positions — staggered 0.08s
+      cardRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const pos = ARC[i];
+        tl.to(el, {
+          x: pos.x,
+          scale: pos.scale,
+          opacity: pos.opacity,
+          y: 0,
+          filter: 'blur(0px)',
+          duration: 1.2,
+          ease: 'power3.out',
+        }, i * 0.08);
+      });
+
+      // Internal parallax: 3 layers at different Y start offsets (deeper = less travel)
+      // SVG — slowest, feels deepest
+      tl.fromTo('.process-svg-wrap',
+        { y: 32 },
+        { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
+        0,
+      );
+      // Title group — baseline
+      tl.fromTo('.process-card-title-group',
+        { y: 48 },
+        { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
+        0,
+      );
+      // Description text travels furthest — feels closest to viewer
+      tl.fromTo('.process-desc-wrap',
+        { y: 64 },
+        { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 },
+        0,
+      );
+
+      entranceTlRef.current = tl;
+
+      // ── 4. Initial dot state ──────────────────────────────
+      const activeDot = dotRefs.current[0];
+      if (activeDot) {
+        gsap.set(activeDot, { width: 24, backgroundColor: processSteps[0].accentColor });
+      }
+    }, sectionRef);
+
+    return () => {
+      stopAutoPlayRef.current?.();
+      gsapCtxRef.current?.revert();
+      gsapCtxRef.current = null;
+      entranceTlRef.current = null;
+    };
+  }, []); // Mount only — no deps
+
+  // ── localProgress: scrub entrance TL + start/stop autoplay ─
+  useEffect(() => {
+    entranceTlRef.current?.progress(localProgress);
+
+    if (localProgress >= 0.92) {
+      startAutoPlayRef.current?.();
+    } else if (localProgress < 0.5) {
+      stopAutoPlayRef.current?.();
+    }
+  }, [localProgress]);
+
   return (
     <section id="process" className="process-section" ref={sectionRef}>
       <div className="process-arc-container">
