@@ -74,9 +74,8 @@ const Footer = () => {
       tl.to(
         '.testimonial-wrapper',
         { 
-          opacity: 0, 
-          scale: 12,
-          z: 1000, 
+          scale: 4,
+          z: 800, 
           rotateX: -20, 
           stagger: 0.05,
           duration: 0.5, 
@@ -87,8 +86,14 @@ const Footer = () => {
 
       tl.to(
         '.footer-contact-panel',
-        { opacity: 0, scale: 15, z: 1200, duration: 0.5, ease: 'power2.in' },
+        { scale: 5, z: 1000, duration: 0.5, ease: 'power2.in' },
         0.55
+      );
+
+      tl.to(
+        ['.testimonial-wrapper', '.footer-contact-panel'],
+        { opacity: 0, duration: 0.25, ease: 'power2.in' },
+        0.5
       );
 
       tlRef.current = tl;
