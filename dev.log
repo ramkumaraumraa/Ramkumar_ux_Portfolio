@@ -1,0 +1,18 @@
+
+> ramkumarux_2026_v3@0.1.0 dev
+> next dev
+
+⚠ Port 3000 is in use by process 15128, using available port 3001 instead.
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.112:3001
+✓ Ready in 482ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          15128
+- Dir:          /Users/ramkumar.ganesh/Desktop/Ramkumar_ux_Portfolio
+- Log:          .next/dev/logs/next-development.log
+
+Run kill 15128 to stop it.
+[?25h

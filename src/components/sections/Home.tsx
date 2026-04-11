@@ -9,7 +9,7 @@ const TEXTS = [
   { pre: 'DESIGNING FOR THE', main: 'FUTURE, INSPIRED', post: 'BY THE PAST', colorClass: 'turquoise' },
 ];
 
-export default function Home() {
+export default function Home({ activeSection = 'home' }: { activeSection?: string }) {
   const [index, setIndex] = useState(0);
   const blockRef = useRef<HTMLDivElement>(null);
   const glowRedRef = useRef<HTMLDivElement>(null);
@@ -42,6 +42,28 @@ export default function Home() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // GSAP Entrance/Exit animation from the old HomeOverlay
+  const hasAnimatedIn = useRef(false);
+  useEffect(() => {
+    const block = blockRef.current;
+    if (!block) return;
+
+    if (!hasAnimatedIn.current) {
+       hasAnimatedIn.current = true;
+       gsap.fromTo(
+          block,
+          { z: -600, scale: 1.8, opacity: 0 },
+          { z: 0, scale: 1, opacity: 1, duration: 1.8, ease: 'power3.out', force3D: true }
+       );
+    } else {
+       if (activeSection !== 'home') {
+          gsap.to(block, { z: -300, opacity: 0, duration: 0.6, ease: 'power2.in', force3D: true });
+       } else {
+          gsap.to(block, { z: 0, opacity: 1, duration: 0.6, ease: 'power2.out', force3D: true });
+       }
+    }
+  }, [activeSection]);
 
   const createTextElements = useCallback(() => {
     if (!blockRef.current) return null;
@@ -309,11 +331,13 @@ export default function Home() {
 
 
   return (
-    <section id="hero" className="home cinematic-hero" aria-labelledby="hero-text">
-      <div className="hero-block" ref={blockRef} id="hero-text" aria-live="polite">
-        <div className="glow glow--red" ref={glowRedRef} aria-hidden="true" />
-        <div className="glow glow--cyan" ref={glowCyanRef} aria-hidden="true" />
-      </div>
-    </section>
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', perspective: '1200px' }}>
+      <section id="hero" className="home cinematic-hero" aria-labelledby="hero-text">
+        <div className="hero-block" ref={blockRef} id="hero-text" aria-live="polite">
+          <div className="glow glow--red" ref={glowRedRef} aria-hidden="true" />
+          <div className="glow glow--cyan" ref={glowCyanRef} aria-hidden="true" />
+        </div>
+      </section>
+    </div>
   );
 }

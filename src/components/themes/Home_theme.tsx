@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo, useEffect, useState } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -8,23 +8,70 @@ const vertexShader = `
   varying vec2 vUv;
   void main() {
     vUv = uv;
-    gl_Position = vec4(position.xy, 0.0, 1.0);
+    gl_Position = vec4(position.xy, 1.0, 1.0);
   }
 `;
 
+// Original blackhole shader by @XorDev (shadertoy.com/view/3csSWB)
+// Section color palettes drive the hue as the user scrolls.
+// No secondary effects — just the void and the accretion disk.
 const fragmentShader = `
   uniform float uTime;
-  uniform vec2 uResolution;
+  uniform vec2  uResolution;
   uniform float uIntensity;
   uniform float uScrollProgress;
+  uniform float uScrollVelocity;
   uniform float uSectionIndex;
-  varying vec2 vUv;
+  varying vec2  vUv;
 
   void main() {
     vec2 F = vUv * uResolution;
-
-    float i = 0.2, a;
     vec2 r = uResolution.xy;
+
+    // ── Section colour palette ────────────────────────────────────────────────
+    vec4 currentColor;
+
+    if (uSectionIndex < 1.0) {
+      // Home: deep cyan
+      vec4 cA = vec4( 0.4, -0.2, -1.2, 0.0);
+      vec4 cB = vec4( 0.8, -0.6, -0.8, 0.0);
+      vec4 cC = vec4( 1.0, -0.8, -0.4, 0.0);
+      float t = uScrollProgress;
+      currentColor = t < 0.5 ? mix(cA, cB, t * 2.0) : mix(cB, cC, (t - 0.5) * 2.0);
+    }
+    else if (uSectionIndex < 2.0) {
+      // Works: pink → indigo
+      vec4 cA = vec4( 1.0, -0.8, -0.4, 0.0);
+      vec4 cB = vec4( 0.2, -0.8, -1.5, 0.0);
+      vec4 cC = vec4(-0.3, -0.5, -1.8, 0.0);
+      float t = fract(uScrollProgress);
+      currentColor = t < 0.5 ? mix(cA, cB, t * 2.0) : mix(cB, cC, (t - 0.5) * 2.0);
+    }
+    else if (uSectionIndex < 3.0) {
+      // About: indigo → green/yellow
+      vec4 cA = vec4(-0.3, -0.5, -1.8, 0.0);
+      vec4 cB = vec4(-0.5, -1.2,  0.3, 0.0);
+      vec4 cC = vec4( 1.5, -1.0,  0.5, 0.0);
+      float t = fract(uScrollProgress);
+      currentColor = t < 0.5 ? mix(cA, cB, t * 2.0) : mix(cB, cC, (t - 0.5) * 2.0);
+    }
+    else if (uSectionIndex < 4.0) {
+      // Process: yellow → magenta/red
+      vec4 cA = vec4( 1.5, -1.0,  0.5, 0.0);
+      vec4 cB = vec4( 1.2, -0.3, -0.8, 0.0);
+      vec4 cC = vec4( 1.8, -0.1, -0.3, 0.0);
+      float t = fract(uScrollProgress);
+      currentColor = t < 0.5 ? mix(cA, cB, t * 2.0) : mix(cB, cC, (t - 0.5) * 2.0);
+    }
+    else {
+      // Footer: red → cyan loop
+      vec4 cA = vec4( 1.8, -0.1, -0.3, 0.0);
+      vec4 cC = vec4( 0.4, -0.2, -1.2, 0.0);
+      currentColor = mix(cA, cC, fract(uScrollProgress));
+    }
+
+    // ── Blackhole (original @XorDev) ─────────────────────────────────────────
+    float i = 0.2, a;
     vec2 p = (F + F - r) / r.y / 0.7;
     vec2 d = vec2(-1.0, 1.0);
     vec2 b = p - i * d;
@@ -33,14 +80,12 @@ const fragmentShader = `
     a = dot(c, c);
 
     vec2 v = c * mat2(
-      cos(0.5 * log(a) + uTime * i), 
-      -sin(0.5 * log(a) + uTime * i),
-      sin(0.5 * log(a) + uTime * i), 
-      cos(0.5 * log(a) + uTime * i)
+       cos(0.5 * log(a) + uTime * i), -sin(0.5 * log(a) + uTime * i),
+       sin(0.5 * log(a) + uTime * i),  cos(0.5 * log(a) + uTime * i)
     ) / i;
 
     vec4 w = vec4(0.0);
-    for(float j = 1.0; j <= 9.0; j++) {
+    for (float j = 1.0; j <= 9.0; j++) {
       v += 0.7 * sin(v.yx * j + uTime) / j + 0.5;
       w += 1.0 + sin(vec4(v.x, v.y, v.y, v.x));
       i += 1.0;
@@ -48,81 +93,18 @@ const fragmentShader = `
 
     i = length(sin(v / 0.3) * 0.4 + c * (3.0 + d));
 
-    // Section-based color palettes with higher contrast
-    vec4 currentColor;
-    
-    if (uSectionIndex < 1.0) {
-      // Home to Works transition - CYAN TO PINK (keep as is)
-      vec4 colorStart = vec4(0.4, -0.2, -1.2, 0.0);  // Deep cyan
-      vec4 colorMid = vec4(0.8, -0.6, -0.8, 0.0);    // Bright cyan-pink
-      vec4 colorEnd = vec4(1.0, -0.8, -0.4, 0.0);    // Intense pink
-      
-      if (uScrollProgress < 0.5) {
-        currentColor = mix(colorStart, colorMid, uScrollProgress * 2.0);
-      } else {
-        currentColor = mix(colorMid, colorEnd, (uScrollProgress - 0.5) * 2.0);
-      }
-    } 
-    else if (uSectionIndex < 2.0) {
-      // Works to About transition - PINK TO DEEP VIOLET/INDIGO
-      vec4 colorStart = vec4(1.0, -0.8, -0.4, 0.0);    // From pink
-      vec4 colorMid = vec4(0.2, -0.8, -1.5, 0.0);      // Deep violet
-      vec4 colorEnd = vec4(-0.3, -0.5, -1.8, 0.0);     // Indigo blue
-      
-      float localProgress = fract(uScrollProgress);
-      if (localProgress < 0.5) {
-        currentColor = mix(colorStart, colorMid, localProgress * 2.0);
-      } else {
-        currentColor = mix(colorMid, colorEnd, (localProgress - 0.5) * 2.0);
-      }
-    }
-    else if (uSectionIndex < 3.0) {
-      // About to Process transition - INDIGO TO VIBRANT GREEN/YELLOW
-      vec4 colorStart = vec4(-0.3, -0.5, -1.8, 0.0);   // From indigo
-      vec4 colorMid = vec4(-0.5, -1.2, 0.3, 0.0);      // Vibrant green
-      vec4 colorEnd = vec4(1.5, -1.0, 0.5, 0.0);       // Yellow-green
-      
-      float localProgress = fract(uScrollProgress);
-      if (localProgress < 0.5) {
-        currentColor = mix(colorStart, colorMid, localProgress * 2.0);
-      } else {
-        currentColor = mix(colorMid, colorEnd, (localProgress - 0.5) * 2.0);
-      }
-    }
-    else if (uSectionIndex < 4.0) {
-      // Process to Footer transition - YELLOW TO MAGENTA/RED
-      vec4 colorStart = vec4(1.5, -1.0, 0.5, 0.0);     // From yellow
-      vec4 colorMid = vec4(1.2, -0.3, -0.8, 0.0);      // Magenta
-      vec4 colorEnd = vec4(1.8, -0.1, -0.3, 0.0);      // Red-orange
-      
-      float localProgress = fract(uScrollProgress);
-      if (localProgress < 0.5) {
-        currentColor = mix(colorStart, colorMid, localProgress * 2.0);
-      } else {
-        currentColor = mix(colorMid, colorEnd, (localProgress - 0.5) * 2.0);
-      }
-    }
-    else {
-      // Footer - RED TO CYAN (complete the circle)
-      vec4 colorStart = vec4(1.8, -0.1, -0.3, 0.0);    // From red-orange
-      vec4 colorEnd = vec4(0.4, -0.2, -1.2, 0.0);      // Back to deep cyan
-      
-      float localProgress = fract(uScrollProgress);
-      currentColor = mix(colorStart, colorEnd, localProgress);
-    }
-
     vec4 O = 1.0 - exp(
       -exp(c.x * currentColor)
-      / w.xyyx
-      / (2.0 + i * i / 4.0 - i)
-      / (0.5 + 1.0 / a)
-      / (0.03 + abs(length(p) - 0.7))
+       / w.xyyx
+       / (2.0 + i * i / 4.0 - i)
+       / (0.5 + 1.0 / a)
+       / (0.03 + abs(length(p) - 0.7))
     );
 
-    // Adjust intensity based on scroll for smoother transitions
-    float dynamicIntensity = uIntensity * (0.4 + 0.6 * (1.0 - uScrollProgress * 0.5));
-    O.rgb *= dynamicIntensity;
-    O.a = max(max(O.r, O.g), O.b) * dynamicIntensity;
+    O.rgb *= uIntensity;
+    // Alpha = brightness of rim — void centre is transparent, rim is opaque.
+    // This lets the CSS starfield/lemniscates/comets show through the dark void.
+    O.a = max(max(O.r, O.g), O.b);
 
     gl_FragColor = O;
   }
@@ -146,68 +128,68 @@ export default function HomeTheme({
   scrollData = {},
   currentSection = 'home'
 }: HomeThemeProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const meshRef   = useRef<THREE.Mesh>(null);
   const startTime = useRef(Date.now());
-  const { viewport } = useThree();
-  const [sectionIndex, setSectionIndex] = useState(0);
+  const { gl }    = useThree();
 
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms: {
-        uTime: { value: 0 },
-        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-        uIntensity: { value: intensity },
+        uTime:           { value: 0 },
+        uResolution:     { value: new THREE.Vector2(
+          gl.domElement.width  || window.innerWidth,
+          gl.domElement.height || window.innerHeight
+        )},
+        uIntensity:      { value: intensity },
         uScrollProgress: { value: 0 },
-        uSectionIndex: { value: 0 }
+        uScrollVelocity: { value: 0 },
+        uSectionIndex:   { value: 0 }
       },
       transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      depthTest: false,
+      depthWrite:  false,
+      depthTest:   false,
+      side: THREE.DoubleSide,
     });
-  }, [intensity]);
+  }, [intensity, gl]);
 
   useEffect(() => {
     const handleResize = () => {
-      shaderMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+      const w = gl.domElement.clientWidth;
+      const h = gl.domElement.clientHeight;
+      shaderMaterial.uniforms.uResolution.value.set(
+        w * window.devicePixelRatio,
+        h * window.devicePixelRatio
+      );
     };
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [shaderMaterial]);
-
-  useEffect(() => {
-    const sections = ['home', 'works', 'about', 'process', 'footer'];
-    const index = sections.indexOf(currentSection);
-    setSectionIndex(index >= 0 ? index : 0);
-  }, [currentSection]);
+  }, [shaderMaterial, gl]);
 
   useFrame(() => {
     if (!meshRef.current) return;
-    
-    const currentTime = (Date.now() - startTime.current) * 0.001;
-    (meshRef.current.material as THREE.ShaderMaterial).uniforms.uTime.value = currentTime;
-    (meshRef.current.material as THREE.ShaderMaterial).uniforms.uIntensity.value =
-      intensityRef ? intensityRef.current : intensity;
-    (meshRef.current.material as THREE.ShaderMaterial).uniforms.uSectionIndex.value = sectionIndex;
-    
-    const scrollProgress = scrollData.progress || 0;
-    (meshRef.current.material as THREE.ShaderMaterial).uniforms.uScrollProgress.value = scrollProgress;
+    const mat = meshRef.current.material as THREE.ShaderMaterial;
+
+    mat.uniforms.uTime.value      = (Date.now() - startTime.current) * 0.001;
+    mat.uniforms.uIntensity.value = intensityRef ? intensityRef.current : intensity;
+
+    const sections = ['home', 'works', 'about', 'process', 'footer'];
+    const idx = sections.indexOf(currentSection);
+    mat.uniforms.uSectionIndex.value = idx >= 0 ? idx : 0;
+
+    mat.uniforms.uScrollProgress.value = scrollData.progress || 0;
+
+    const targetVel = (scrollData.velocity || 0) * 0.035;
+    mat.uniforms.uScrollVelocity.value +=
+      (targetVel - mat.uniforms.uScrollVelocity.value) * 0.1;
 
     meshRef.current.visible = !transitionsEnabled;
   });
 
-  const scale = responsive.isMobile ? 0.7 : 1;
-
   return (
-    <mesh 
-      ref={meshRef} 
-      scale={[viewport.width * scale, viewport.height * scale, 1]} 
-      position={[0, 0, -5]}
-      frustumCulled={false}
-      renderOrder={-10}
-    >
+    <mesh ref={meshRef} frustumCulled={false} renderOrder={-10}>
       <planeGeometry args={[2, 2]} />
       <primitive object={shaderMaterial} />
     </mesh>

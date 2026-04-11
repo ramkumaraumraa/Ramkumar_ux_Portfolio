@@ -8,6 +8,7 @@ import { gsap } from 'gsap';
 const About = () => {
   const aboutRef = useRef<HTMLElement>(null);
   const gsapContextRef = useRef<gsap.Context | null>(null);
+  const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const [hoveredExpertise, setHoveredExpertise] = useState<number | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipPlacement, setTooltipPlacement] = useState("right");
@@ -48,6 +49,7 @@ const About = () => {
 
     gsapContextRef.current = gsap.context(() => {
       const tl = gsap.timeline({ paused: true });
+      timelineRef.current = tl;
 
       // Build the reveal timeline
       tl.fromTo('.about-left', { scale: 0.95, opacity: 0, x: -24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
@@ -64,16 +66,23 @@ const About = () => {
     }, aboutRef);
 
     return () => {
-      if (gsapContextRef.current) {
-        gsapContextRef.current.revert();
-      }
+      if (gsapContextRef.current) gsapContextRef.current.revert();
+      timelineRef.current = null;
     };
-  }, [isDesktop, localProgress]);
+  }, [isDesktop]);
+
+  useEffect(() => {
+    if (timelineRef.current) {
+      timelineRef.current.progress(localProgress);
+    }
+  }, [localProgress]);
 
   const handleStatMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.killTweensOf(e.currentTarget);
     gsap.to(e.currentTarget, { scale: 1.05, duration: 0.3, ease: 'back.out(2)' });
   };
   const handleStatMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.killTweensOf(e.currentTarget);
     gsap.to(e.currentTarget, { scale: 1, duration: 0.3, ease: 'power2.out' });
   };
 
@@ -117,25 +126,29 @@ const About = () => {
     setHoveredExpertise(index);
     handleExpertiseMouseMove(e);
 
-    const tooltip = document.querySelector(".expertise-tooltip");
-    if (tooltip) {
-      gsap.fromTo(
-        tooltip,
-        { opacity: 0, scale: 0.8 },
-        { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" }
-      );
-    }
+    setTimeout(() => {
+      const tooltip = document.querySelector(".expertise-tooltip");
+      if (tooltip) {
+        gsap.killTweensOf(tooltip);
+        gsap.fromTo(
+          tooltip,
+          { opacity: 0, scale: 0.8 },
+          { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" }
+        );
+      }
+    }, 0);
   };
 
   const handleExpertiseMouseLeave = () => {
     if (!isDesktop) return;
     const tooltip = document.querySelector(".expertise-tooltip");
     if (tooltip) {
+      gsap.killTweensOf(tooltip);
       gsap.to(tooltip, {
         opacity: 0,
         scale: 0.8,
-        duration: 0.3,
-        ease: "power3.out",
+        duration: 0.2, // slightly faster exit
+        ease: "power2.in",
         onComplete: () => setHoveredExpertise(null)
       });
     } else {

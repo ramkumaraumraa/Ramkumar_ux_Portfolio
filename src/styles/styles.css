@@ -1470,166 +1470,84 @@ body.scroll-locked {
   overflow: hidden;
 }
 
-/* ─── Arc container ─────────────────────────────────────── */
-.process-arc-container {
-  position: relative;
+/* ─── Holographic Data Grid ───────────────────────────────── */
+.holographic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
   width: 100%;
-  height: 520px;
-  overflow: visible;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Cards are placed absolutely by GSAP — only width set here */
-.process-arc-card {
-  position: absolute;
-  width: 280px;
-  will-change: transform, opacity;
-}
-
-/* Title + subtitle grouped for parallax targeting */
-.process-card-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 8px;
-}
-
-/* Description: GSAP controls height (0 → auto) */
-.process-desc-wrap {
-  overflow: hidden;
-}
-
-/* ─── Step indicator dots ───────────────────────────────── */
-.process-step-indicators {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 28px;
-}
-
-.process-step-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.2);
-  /* GSAP morphs width + background-color on active */
-}
-
-/* =========================================
-   CARD (single definition)
-   ========================================= */
-
-.process-card {
-  --stroke: 0.6px;                          /* gradient border thickness */
-  --fill: rgba(0, 14, 35, 0.06);          /* faint fill for readability */
-  border-radius: 8px;
+  max-width: 900px;
   position: relative;
-  overflow: hidden;
-  padding:12px;
-  background: var(--fill);                /* low opacity background */
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 0.6px solid transparent;          /* for ring layout consistency */
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  z-index: 105;
+}
+
+.holo-card {
+  position: relative;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  min-height: 480px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transform-style: preserve-3d;
+  will-change: transform, opacity, height, background-color, border-color, box-shadow;
+}
+
+.holo-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   cursor: default;
 }
 
-/* Gradient stroke drawn via masked ring (keeps radius + vivid color) */
-.process-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  padding: var(--stroke);
-  border-radius: inherit;
-  pointer-events: none;
-  background: var(--border-gradient, linear-gradient(135deg, #6B46C1, #FF1493));
-  /* keep only the ring */
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-          mask-composite: exclude;
-}
-
-/* Pick gradient per card (reuses your original palette) */
-.process-card-1 { --border-gradient: linear-gradient(135deg, #6B46C1, #FF1493); }
-.process-card-2 { --border-gradient: linear-gradient(135deg, #FF1493, #FFD700); }
-.process-card-3 { --border-gradient: linear-gradient(135deg, #FFD700, #00FF00); }
-.process-card-4 { --border-gradient: linear-gradient(135deg, #00FF00, #00BFFF); }
-
-/* =========================================
-   SVG STACK
-   ========================================= */
-
-.process-svg-wrap {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  margin-bottom: 20px;
-  overflow: hidden;
+.holo-icon-wrap {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.01);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
-.process-card-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 10px;
-  will-change: opacity;
-  transition: opacity 1.5s ease-in-out;
+.holo-svg {
+  width: 32px;
+  height: 32px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* =========================================
-   CONTENT
-   ========================================= */
-
-.process-card-content {
-  flex: 1;
+.holo-title-group {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 4px;
+}
+
+.holo-desc {
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  will-change: height, opacity;
 }
 
 /* =========================================
    RESPONSIVE
    ========================================= */
 
-/* Tablet: narrower cards */
-@media (max-width: 1024px) {
-  .process-arc-container {
-    height: 480px;
-  }
-  .process-arc-card {
-    width: 240px;
-  }
-
-  .process-card {
-    max-width: 360px;
-  }
-}
-
-/* Mobile: single-card centered, clip overflow */
 @media (max-width: 768px) {
-  .process-arc-container {
-    height: 460px;
-    overflow: hidden;
-  }
-  .process-arc-card {
-    width: min(90vw, 340px);
+  .holographic-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding-bottom: 2rem;
   }
 }
   

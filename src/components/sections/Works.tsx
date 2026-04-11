@@ -33,6 +33,8 @@ const Works = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const hoverTweens = useRef<(gsap.core.Tween | null)[]>([]);
 
   const cardData = [
     {
@@ -99,6 +101,7 @@ const Works = () => {
 
     const positions = getPositions();
     const tl = gsap.timeline({ paused: true });
+    timelineRef.current = tl;
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
@@ -115,13 +118,20 @@ const Works = () => {
       }, i * 0.05); // slight stagger in the timeline
     });
 
-    // Drive timeline progress by local scroll progress
+    // Initialize progress
     tl.progress(localProgress);
 
     return () => {
       tl.kill();
+      timelineRef.current = null;
     };
-  }, [getPositions, localProgress]);
+  }, [getPositions]);
+
+  useEffect(() => {
+    if (timelineRef.current) {
+      timelineRef.current.progress(localProgress);
+    }
+  }, [localProgress]);
 
   const handleMouseEnter = (index: number) => {
     const card = cardRefs.current[index];
@@ -129,24 +139,29 @@ const Works = () => {
 
     const positions = getPositions();
     
-    gsap.to(card, {
+    // Kill any active hover tweens for this card to prevent conflicts, 
+    // without killing the main timeline properties
+    if (hoverTweens.current[index]) hoverTweens.current[index]?.kill();
+
+    hoverTweens.current[index] = gsap.to(card, {
       scale: positions[index].scale + 0.1,
       zIndex: 50,
       rotation: 0, // Straighten the hovered card
       duration: 0.5,
       ease: 'power3.out',
-      overwrite: 'auto'
+      overwrite: false
     });
 
     // Dim sideways siblings
     cardRefs.current.forEach((c, i) => {
       if (i !== index && c) {
-        gsap.to(c, {
+        if (hoverTweens.current[i]) hoverTweens.current[i]?.kill();
+        hoverTweens.current[i] = gsap.to(c, {
           scale: positions[i].scale - 0.05,
           opacity: 0.4,
           duration: 0.5,
           ease: 'power3.out',
-          overwrite: 'auto'
+          overwrite: false
         });
       }
     });
@@ -160,14 +175,15 @@ const Works = () => {
 
     cardRefs.current.forEach((c, i) => {
       if (c) {
-        gsap.to(c, {
+        if (hoverTweens.current[i]) hoverTweens.current[i]?.kill();
+        hoverTweens.current[i] = gsap.to(c, {
           scale: positions[i].scale,
           rotation: positions[i].rotate,
           opacity: 1,
           zIndex: positions[i].zIndex,
           duration: 0.5,
           ease: 'power3.out',
-          overwrite: 'auto'
+          overwrite: false
         });
       }
     });

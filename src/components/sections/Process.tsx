@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
@@ -48,212 +48,116 @@ const processSteps = [
   },
 ];
 
-// Arc position configs by offset from active card (mod 4).
-// x is in px, applied by GSAP.
-const ARC = [
-  { x: 0,    scale: 1.00, opacity: 1.00 }, // offset 0 = center (active)
-  { x: 260,  scale: 0.72, opacity: 0.55 }, // offset 1 = near-right
-  { x: 520,  scale: 0.50, opacity: 0.20 }, // offset 2 = far-right
-  { x: -260, scale: 0.72, opacity: 0.55 }, // offset 3 = near-left
-] as const;
-
-const Process = () => {
+export default function Process() {
   const sectionRef = useRef<HTMLElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
-  const dotRefs  = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
-  const entranceTlRef    = useRef<gsap.core.Timeline | null>(null);
-  const gsapCtxRef       = useRef<gsap.Context | null>(null);
-  const activeIndexRef   = useRef(0);
-  const autoPlayRunning  = useRef(false);
-  const startAutoPlayRef = useRef<(() => void) | null>(null);
-  const stopAutoPlayRef  = useRef<(() => void) | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
-  const localProgress = useSectionProgress(3, 0.7);
+  const localProgress = useSectionProgress(3, 0.5);
+  const entranceTlRef = useRef<gsap.core.Timeline | null>(null);
+  const ctxRef = useRef<gsap.Context | null>(null);
 
-  // ── Mount: entrance TL + auto-play ───────────────────────
   useEffect(() => {
-    if (!sectionRef.current) return;
+    if (!sectionRef.current || !gridRef.current) return;
 
-    gsapCtxRef.current = gsap.context(() => {
-      // ── Initial GSAP positions ────────────────────────────
-      cardRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const pos = ARC[i];
-        gsap.set(el, { x: pos.x, scale: 0.4, opacity: 0, y: 80, filter: 'blur(12px)' });
-      });
+    ctxRef.current = gsap.context(() => {
+      const cards = gsap.utils.toArray('.holo-card') as HTMLElement[];
 
-      const descEls = cardRefs.current.map(el => el?.querySelector<HTMLElement>('.process-desc-wrap') ?? null);
-      if (descEls[0]) gsap.set(descEls[0], { height: 'auto', opacity: 1 });
-      [1, 2, 3].forEach(i => { if (descEls[i]) gsap.set(descEls[i], { height: 0, opacity: 0 }); });
+      // Initial State
+      gsap.set(cards, { opacity: 0, z: -800, y: 100, rotationX: 15, scale: 0.8 });
 
-      // ── Entrance timeline ─────────────────────────────────
-      const q = gsap.utils.selector(sectionRef.current);
+      // Build Entrance Timeline scrubbed by localProgress
       const tl = gsap.timeline({ paused: true });
-
-      cardRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const pos = ARC[i];
-        tl.to(el, {
-          x: pos.x, scale: pos.scale, opacity: pos.opacity,
-          y: 0, filter: 'blur(0px)',
-          duration: 1.2, ease: 'power3.out',
-        }, i * 0.08);
+      tl.to(cards, {
+        opacity: 1,
+        z: 0,
+        y: 0,
+        rotationX: 0,
+        scale: 1,
+        duration: 2,
+        ease: 'power3.out',
+        stagger: 0.1,
+        force3D: true,
       });
-
-      tl.fromTo(q('.process-svg-wrap'),
-        { y: 32 }, { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 }, 0);
-      tl.fromTo(q('.process-card-title-group'),
-        { y: 48 }, { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 }, 0);
-      tl.fromTo(q('.process-desc-wrap'),
-        { y: 64 }, { y: 0, duration: 1.2, ease: 'power3.out', stagger: 0.06 }, 0);
 
       entranceTlRef.current = tl;
-
-      // ── Step dot updater ──────────────────────────────────
-      const updateDots = (idx: number) => {
-        dotRefs.current.forEach((dot, i) => {
-          if (!dot) return;
-          if (i === idx) {
-            gsap.to(dot, {
-              width: 24,
-              backgroundColor: processSteps[idx].accentColor,
-              duration: 0.4, ease: 'power2.out',
-            });
-          } else {
-            gsap.to(dot, {
-              width: 8,
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              duration: 0.3, ease: 'power2.out',
-            });
-          }
-        });
-      };
-
-      // Set initial dot — card 0 active
-      const d0 = dotRefs.current[0];
-      if (d0) gsap.set(d0, { width: 24, backgroundColor: processSteps[0].accentColor });
-
-      // ── Auto-play: advance one step ───────────────────────
-      let timerHandle: ReturnType<typeof setTimeout> | null = null;
-
-      const advance = () => {
-        const prev = activeIndexRef.current;
-        const next = (prev + 1) % 4;
-
-        const transitionTl = gsap.timeline({
-          onComplete: () => {
-            activeIndexRef.current = next;
-            window.dispatchEvent(
-              new CustomEvent('process-active-card', { detail: { index: next } })
-            );
-            updateDots(next);
-            schedule();
-          },
-        });
-
-        cardRefs.current.forEach((el, i) => {
-          if (!el) return;
-          const diff = ((i - next) % 4 + 4) % 4;
-          const pos = ARC[diff];
-          transitionTl.to(el, {
-            x: pos.x, scale: pos.scale, opacity: pos.opacity,
-            duration: 0.7, ease: 'power3.inOut',
-          }, 0);
-        });
-
-        const prevDesc = descEls[prev];
-        const nextDesc = descEls[next];
-        if (prevDesc) {
-          transitionTl.to(prevDesc, { height: 0, opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
-        }
-        if (nextDesc) {
-          // Measure natural height first — GSAP cannot tween to 'auto'
-          nextDesc.style.height = 'auto';
-          const naturalHeight = nextDesc.scrollHeight;
-          nextDesc.style.height = '0px';
-          transitionTl.to(nextDesc, { height: naturalHeight, opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.3);
-        }
-      };
-
-      const schedule = () => {
-        if (!autoPlayRunning.current) return;
-        timerHandle = setTimeout(advance, 3500);
-      };
-
-      // ── Expose start / stop via refs ──────────────────────
-      startAutoPlayRef.current = () => {
-        if (autoPlayRunning.current) return;
-        autoPlayRunning.current = true;
-        schedule();
-      };
-
-      stopAutoPlayRef.current = () => {
-        autoPlayRunning.current = false;
-        if (timerHandle) { clearTimeout(timerHandle); timerHandle = null; }
-      };
     }, sectionRef);
 
-    return () => {
-      stopAutoPlayRef.current?.();
-      gsapCtxRef.current?.revert();
-      gsapCtxRef.current = null;
-      entranceTlRef.current = null;
-    };
-  }, []); // mount only
+    return () => ctxRef.current?.revert();
+  }, []);
 
-  // ── localProgress: scrub entrance TL + start/stop autoplay ─
   useEffect(() => {
-    entranceTlRef.current?.progress(localProgress);
-
-    if (localProgress >= 0.92) {
-      startAutoPlayRef.current?.();
-    } else if (localProgress < 0.5) {
-      stopAutoPlayRef.current?.();
+    if (entranceTlRef.current) {
+      entranceTlRef.current.progress(localProgress);
     }
   }, [localProgress]);
 
+  // Handle Holographic Hover Effects
+  const handleMouseEnter = (index: number) => {
+    setHoveredCard(index);
+
+    const cards = document.querySelectorAll('.holo-card');
+    cards.forEach((card, i) => {
+      if (i === index) {
+        // Expand the hovered card
+        gsap.to(card, { scale: 1.05, borderColor: processSteps[i].accentColor, backgroundColor: 'rgba(255,255,255,0.08)', zIndex: 10, duration: 0.4, ease: 'power2.out' });
+        
+        // Spin SVG
+        const svg = card.querySelector('.holo-svg');
+        gsap.to(svg, { rotation: '+=90', duration: 0.6, ease: 'back.out(1.5)' });
+
+        // Show description
+        const desc = card.querySelector('.holo-desc') as HTMLElement;
+        gsap.to(desc, { height: 'auto', opacity: 1, marginTop: '12px', duration: 0.4, ease: 'power2.out' });
+
+      } else {
+        // Dim other cards
+        gsap.to(card, { scale: 0.95, opacity: 0.3, zIndex: 1, borderColor: 'rgba(255,255,255,0.05)', backgroundColor: 'transparent', duration: 0.4, ease: 'power2.out' });
+        
+        const desc = card.querySelector('.holo-desc');
+        gsap.to(desc, { height: 0, opacity: 0, marginTop: 0, duration: 0.4, ease: 'power2.out' });
+      }
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredCard(null);
+
+    const cards = document.querySelectorAll('.holo-card');
+    cards.forEach((card, i) => {
+      gsap.to(card, { scale: 1, opacity: 1, zIndex: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)', duration: 0.4, ease: 'power2.out' });
+      
+      const desc = card.querySelector('.holo-desc');
+      gsap.to(desc, { height: 0, opacity: 0, marginTop: 0, duration: 0.4, ease: 'power2.out' });
+    });
+  };
+
   return (
     <section id="process" className="process-section" ref={sectionRef}>
-      <div className="process-arc-container">
+      <div className="holographic-grid" ref={gridRef} onMouseLeave={handleMouseLeave} style={{ perspective: '1200px' }}>
         {processSteps.map((step, i) => (
           <div
             key={step.id}
-            ref={(el) => { cardRefs.current[i] = el; }}
-            className={`process-card process-arc-card process-card-${step.id}`}
+            className="holo-card"
+            onMouseEnter={() => handleMouseEnter(i)}
           >
-            <div className="process-svg-wrap" style={{ position: 'relative' }}>
-              <Image
-                src={step.svgSrc}
-                alt=""
-                fill
-                style={{ objectFit: 'contain' }}
-              />
+            <div className="holo-header">
+              <div className="holo-icon-wrap" style={{ borderColor: step.accentColor, boxShadow: `0 0 15px ${step.accentColor}40` }}>
+                <div className="holo-svg">
+                  <Image src={step.svgSrc} alt={step.title} fill style={{ objectFit: 'contain' }} />
+                </div>
+              </div>
+              <div className="holo-title-group">
+                <h3 className={`${step.colorClass} neon body-title-4 m-0`}>{step.title}</h3>
+                <p className="body-2 m-0" style={{ opacity: 0.8 }}>{step.subtitle}</p>
+              </div>
             </div>
-
-            <div className="process-card-content">
-              <div className="process-card-title-group">
-                <h3 className={`${step.colorClass} neon body-title-3`}>{step.title}</h3>
-                <p className="body-2">{step.subtitle}</p>
-              </div>
-              <div className="process-desc-wrap">
-                <p className="footnote">{step.description}</p>
-              </div>
+            <div className="holo-desc">
+              <p className="footnote m-0" style={{ color: '#e0e0e0', lineHeight: 1.6 }}>{step.description}</p>
             </div>
           </div>
         ))}
       </div>
-
-      <div className="process-step-indicators">
-        {processSteps.map((_, i) => (
-          <div
-            key={i}
-            ref={(el) => { dotRefs.current[i] = el; }}
-            className="process-step-dot"
-          />
-        ))}
-      </div>
     </section>
   );
-};
-
-export default Process;
+}

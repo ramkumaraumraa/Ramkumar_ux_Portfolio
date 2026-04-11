@@ -8,13 +8,11 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Loader from '../components/Loader';
 import Cursor from '../components/Cursor';
 import Navbar from '../components/Navbar';
-import Background from '../components/themes/Background';
-import { SectionPanel } from '../components/themes/SectionPanel';
 import SectionChrome from '../components/themes/SectionChrome';
 import SectionOverlay from '../components/themes/SectionOverlay';
-import HomeOverlay from '../components/themes/HomeOverlay';
 
 const Orchestrator = dynamic(() => import('../components/themes/Orchestrator'), { ssr: false });
+const Background     = dynamic(() => import('../components/themes/Background'),  { ssr: false });
 const HomeSection    = dynamic(() => import('../components/sections/Home'),    { ssr: false });
 const WorksSection   = dynamic(() => import('../components/sections/Works'),   { ssr: false });
 const AboutSection   = dynamic(() => import('../components/sections/About'),   { ssr: false });
@@ -71,7 +69,10 @@ export default function Page() {
 
   /* Preload WebGL before loader exits */
   useEffect(() => {
-    const onExit = () => setPreparingExit(true);
+    const onExit = () => {
+      setPreparingExit(true);
+      setTimeout(() => setBackgroundReady(true), 200);
+    };
     window.addEventListener('loader-exiting', onExit);
     return () => window.removeEventListener('loader-exiting', onExit);
   }, []);
@@ -330,7 +331,6 @@ export default function Page() {
       {/* Preload WebGL while loader is still showing */}
       {preparingExit && !loaderComplete && (
         <div style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
-          <Background onReady={() => setBackgroundReady(true)} currentSection={activeSection} />
           <div className="Background-Animation">
             <Orchestrator
               lenis={lenisRef.current}
@@ -349,8 +349,10 @@ export default function Page() {
 
       {loaderComplete && (
         <div style={{ animation: 'fadeIn 1s ease-out' }}>
+          {/* ── CSS starfield + lemniscates + comets ── */}
+          <Background activeSection={activeSection} />
+
           {/* ── WebGL wormhole background ── */}
-          <Background currentSection={activeSection} />
           <div className="Background-Animation">
             <Orchestrator
               lenis={lenisRef.current}
@@ -365,9 +367,6 @@ export default function Page() {
               scrollProgressRef={scrollProgressRef}
             />
           </div>
-
-          {/* ── Home overlay: persistent neon text ── */}
-          <HomeOverlay activeSection={activeSection} />
 
           {/* ── Section overlays: Unified CSS proximity system ── */}
           <SectionOverlay activeSection={activeSection} />

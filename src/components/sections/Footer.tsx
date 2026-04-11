@@ -48,7 +48,7 @@ const Footer = () => {
       const tl = gsap.timeline({ paused: true });
       
       tl.fromTo(
-        '.testimonial-card',
+        '.testimonial-wrapper',
         { opacity: 0, y: 60, z: -100, rotateX: 10 },
         { 
           opacity: 1, 
@@ -57,8 +57,7 @@ const Footer = () => {
           rotateX: 0, 
           stagger: 0.15,
           duration: 1, 
-          ease: 'power2.out',
-          clearProps: 'transform,rotateX,y,z' // ensure original CSS hover works!
+          ease: 'power2.out'
         },
         0.2
       );
@@ -71,10 +70,14 @@ const Footer = () => {
       );
 
       tlRef.current = tl;
+      tl.progress(localProgress);
     }, footerRef);
 
-    return () => ctx.revert();
-  }, []); // Run once on mount
+    return () => {
+      ctx.revert();
+      tlRef.current = null;
+    };
+  }, []); // Initialize with localProgress correctly, run once on mount
 
   useEffect(() => {
     if (tlRef.current) {
@@ -89,27 +92,28 @@ const Footer = () => {
           const isFeatured = testimonial.variant === 'featured';
 
           return (
-            <article
-              key={testimonial.name}
-              className={`testimonial-card testimonial-card--${testimonial.variant}`}
-            >
-              <p className="body-2 testimonial-quote">"{testimonial.description}"</p>
+            <div key={testimonial.name} className="testimonial-wrapper">
+              <article
+                className={`testimonial-card testimonial-card--${testimonial.variant}`}
+              >
+                <p className="body-2 testimonial-quote">"{testimonial.description}"</p>
 
-              <div className="testimonial-card-footer">
-                <Image
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  width={56}
-                  height={56}
-                  className="testimonial-img"
-                />
+                <div className="testimonial-card-footer">
+                  <Image
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    width={56}
+                    height={56}
+                    className="testimonial-img"
+                  />
 
-                <div className="testimonial-card-content">
-                  <p className="body-title-2">{testimonial.name}</p>
-                  <p className="footnote testimonial-role">{testimonial.role}</p>
+                  <div className="testimonial-card-content">
+                    <p className="body-title-2">{testimonial.name}</p>
+                    <p className="footnote testimonial-role">{testimonial.role}</p>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </article>
+            </div>
           );
         })}
       </div>
