@@ -246,11 +246,25 @@ const Background = ({ activeSection = 'home', onReady }: BackgroundProps) => {
     let targetLayerCount = isLowPerf ? 2 : 3;
     let animationId: number;
 
-    const handleScroll = () => {
+    let shaderTime = 0;
+    let lastTime = performance.now();
+    let currentSpeed = 0.02; // ultra slow default
+    let targetSpeed = 0.02;
+    let scrollTimeout: ReturnType<typeof setTimeout>;
+
+    const handleVirtualScroll = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+
+      targetSpeed = 1.0; // speed of what it was currently
+
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        targetSpeed = 0.02;
+      }, 150);
+
       if (!isLowPerf) {
-        const scrollTop = window.scrollY || window.pageYOffset;
-        const maxScroll = document.body.scrollHeight - window.innerHeight;
-        targetLayerCount = THREE.MathUtils.clamp(3 + (scrollTop / maxScroll) * 3, 3, 6);
+        targetLayerCount = THREE.MathUtils.clamp(3 + detail.progress * 3, 3, 6);
       }
     };
 
@@ -260,13 +274,26 @@ const Background = ({ activeSection = 'home', onReady }: BackgroundProps) => {
     };
 
     if (!isLowPerf) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('virtual-scroll', handleVirtualScroll, { passive: true });
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
     }
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
-      starMaterial.uniforms.uTime.value = performance.now() * 0.001;
+      
+      const now = performance.now();
+      const delta = now - lastTime;
+      lastTime = now;
+
+      // Smooth transition between slow and normal speed
+      currentSpeed += (targetSpeed - currentSpeed) * 0.05;
+      
+      // Prevent crazy jumps if tab was inactive and delta is huge
+      const clampedDelta = Math.min(delta, 50); 
+      shaderTime += (clampedDelta * 0.001) * currentSpeed;
+
+      starMaterial.uniforms.uTime.value = shaderTime;
+
       if (!isLowPerf) {
         starMaterial.uniforms.uLayerCount.value +=
           (targetLayerCount - starMaterial.uniforms.uLayerCount.value) * 0.1;
@@ -287,8 +314,9 @@ const Background = ({ activeSection = 'home', onReady }: BackgroundProps) => {
 
     return () => {
       cancelAnimationFrame(animationId);
+      clearTimeout(scrollTimeout);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('virtual-scroll', handleVirtualScroll);
       window.removeEventListener('mousemove', handleMouseMove);
       if (threeContainer.parentNode) threeContainer.parentNode.removeChild(threeContainer);
       starGeometry.dispose();
