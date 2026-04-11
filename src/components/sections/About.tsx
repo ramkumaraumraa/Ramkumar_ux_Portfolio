@@ -64,9 +64,12 @@ const About = () => {
 
       // Phase 2: Zoom Past Camera (0.5 to 1.0)
       // Elements scale up massively and fade out as if the camera passed through them
-      tl.to('.about-left', { scale: 8, opacity: 0, x: -500, rotateY: -30, duration: 0.5, ease: 'power2.in' }, 0.5);
-      tl.to('.about-right', { scale: 8, opacity: 0, x: 500, rotateY: 30, duration: 0.5, ease: 'power2.in' }, 0.5);
-      tl.to('.about-header', { scale: 12, opacity: 0, z: 500, duration: 0.5, ease: 'power2.in' }, 0.52);
+      tl.to('.about-left', { scale: 4, x: -300, rotateY: -30, duration: 0.5, ease: 'power2.in' }, 0.5);
+      tl.to('.about-right', { scale: 4, x: 300, rotateY: 30, duration: 0.5, ease: 'power2.in' }, 0.5);
+      tl.to('.about-header', { scale: 5, z: 300, duration: 0.5, ease: 'power2.in' }, 0.52);
+
+      // Fast fade out
+      tl.to(['.about-left', '.about-right', '.about-header'], { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.5);
 
       // Sync timeline with scroll progress
       tl.progress(localProgress);

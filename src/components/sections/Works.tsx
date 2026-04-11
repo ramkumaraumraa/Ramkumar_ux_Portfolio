@@ -129,12 +129,18 @@ const Works = () => {
       tl.to(card, {
         xPercent: (positions[i].xPercent * 3) - 50,
         yPercent: (positions[i].yPercent * 3) - 50,
-        scale: 8,
-        opacity: 0,
+        scale: 4,
         rotation: positions[i].rotate * 2,
         duration: 0.5,
         ease: 'power2.in',
         force3D: true
+      }, 0.5);
+      
+      // Fade out explicitly faster
+      tl.to(card, {
+        opacity: 0,
+        duration: 0.25,
+        ease: 'power2.in'
       }, 0.5);
     });
 

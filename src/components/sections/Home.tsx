@@ -67,9 +67,9 @@ export default function Home({ activeSection = 'home' }: { activeSection?: strin
     } else {
       const exitP = (localProgress - 0.5) * 2; // Map 0.5-1 to 0-1
       gsap.to(block, { 
-        z: exitP * 1000, 
-        scale: 1 + exitP * 12, 
-        opacity: 1 - exitP, 
+        z: exitP * 600, 
+        scale: 1 + exitP * 4, 
+        opacity: Math.max(0, 1 - exitP * 3), 
         duration: 0.2, 
         overwrite: 'auto' 
       });
@@ -80,10 +80,16 @@ export default function Home({ activeSection = 'home' }: { activeSection?: strin
     const block = blockRef.current;
     if (!block) return;
     hasAnimatedIn.current = true;
-    gsap.fromTo(
-      block,
-      { z: -600, scale: 0.1, opacity: 0 },
-      { z: 0, scale: 1, opacity: 1, duration: 2.5, ease: 'power4.out', force3D: true }
+    
+    // Zoom scale/Z 
+    gsap.fromTo(block, 
+      { z: -600, scale: 0.1 }, 
+      { z: 0, scale: 1, duration: 2.5, ease: 'power4.out', force3D: true }
+    );
+    // Faster fade-in
+    gsap.fromTo(block,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.8, ease: 'power2.out' }
     );
   }, []);
 
@@ -200,9 +206,15 @@ export default function Home({ activeSection = 'home' }: { activeSection?: strin
 
       const masterTl = gsap.timeline();
 
+      // Line 1 entry
+      masterTl.to(line1Chars, {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power2.out',
+        stagger: { each: 0.06, from: 'start' }
+      }, 0);
       masterTl.to(line1Chars, {
         scale: 1,
-        opacity: 1,
         x: 0,
         filter: 'blur(0px)',
         duration: 4,
@@ -211,9 +223,15 @@ export default function Home({ activeSection = 'home' }: { activeSection?: strin
         force3D: true
       }, 0);
 
+      // Line 2 entry
+      masterTl.to(line2Chars, {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power2.out',
+        stagger: { each: 0.05, from: 'center' }
+      }, 0.4);
       masterTl.to(line2Chars, {
         scale: 1,
-        opacity: 1,
         x: 0,
         filter: 'blur(0px)',
         duration: 4,
@@ -222,9 +240,15 @@ export default function Home({ activeSection = 'home' }: { activeSection?: strin
         force3D: true
       }, 0.4);
 
+      // Line 3 entry
+      masterTl.to(line3Chars, {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power2.out',
+        stagger: { each: 0.06, from: 'end' }
+      }, 0.8);
       masterTl.to(line3Chars, {
         scale: 1,
-        opacity: 1,
         x: 0,
         filter: 'blur(0px)',
         duration: 4,

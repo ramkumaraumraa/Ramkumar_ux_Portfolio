@@ -88,14 +88,20 @@ export default function Process() {
 
       // Phase 2: Exit Portal (0.5 to 1.0)
       tl.to(cards, {
-        z: 1000,
-        scale: 12,
-        opacity: 0,
+        z: 800,
+        scale: 5,
         rotationX: -45,
         duration: 0.5,
         ease: 'power2.in',
         stagger: 0.03,
         force3D: true,
+      }, 0.5);
+      
+      tl.to(cards, {
+        opacity: 0,
+        duration: 0.25,
+        ease: 'power2.in',
+        stagger: 0.03,
       }, 0.5);
 
       entranceTlRef.current = tl;
