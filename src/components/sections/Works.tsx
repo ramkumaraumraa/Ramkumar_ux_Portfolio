@@ -105,17 +105,37 @@ const Works = () => {
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
-      tl.to(card, {
+      
+      // Phase 1: Enter (0 -> 0.5)
+      tl.fromTo(card, {
+        xPercent: -50,
+        yPercent: -50,
+        scale: 0.1,
+        opacity: 0,
+        rotation: 0
+      }, {
         xPercent: positions[i].xPercent - 50,
         yPercent: positions[i].yPercent - 50,
-        rotation: positions[i].rotate,
         scale: positions[i].scale,
+        rotation: positions[i].rotate,
         opacity: 1,
         zIndex: positions[i].zIndex,
         ease: 'power2.out',
-        duration: 1, // Timeline relative duration
+        duration: 0.5,
         force3D: true
-      }, i * 0.05); // slight stagger in the timeline
+      }, 0);
+
+      // Phase 2: Exit Portal (0.5 -> 1.0)
+      tl.to(card, {
+        xPercent: (positions[i].xPercent * 3) - 50,
+        yPercent: (positions[i].yPercent * 3) - 50,
+        scale: 8,
+        opacity: 0,
+        rotation: positions[i].rotate * 2,
+        duration: 0.5,
+        ease: 'power2.in',
+        force3D: true
+      }, 0.5);
     });
 
     // Initialize progress

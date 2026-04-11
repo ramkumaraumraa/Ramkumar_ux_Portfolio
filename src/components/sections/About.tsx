@@ -51,15 +51,22 @@ const About = () => {
       const tl = gsap.timeline({ paused: true });
       timelineRef.current = tl;
 
-      // Build the reveal timeline
-      tl.fromTo('.about-left', { scale: 0.95, opacity: 0, x: -24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
-      tl.fromTo('.about-right', { scale: 0.95, opacity: 0, x: 24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
-      tl.fromTo('.stat-item', { scale: 0.8, opacity: 0, y: 20 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.8, stagger: 0.1 }, 0.2);
+      // Phase 1: Enter & Dock (0.0 to 0.5)
+      // Elements come from deep distance (scale 0.1) and settle at center (scale 1)
+      tl.fromTo('.about-left', { scale: 0.1, opacity: 0, x: -100 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 0.5 }, 0);
+      tl.fromTo('.about-right', { scale: 0.1, opacity: 0, x: 100 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 0.5 }, 0);
+      tl.fromTo('.stat-item', { scale: 0.5, opacity: 0, y: 50 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.4, stagger: 0.05 }, 0.1);
       
       const targetClass = isDesktop ? '.expertise-item' : '.expertise-accordion-item';
       if (document.querySelectorAll(targetClass).length > 0) {
-        tl.fromTo(targetClass, { scale: 0.9, opacity: 0, y: 16 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.6, stagger: 0.05 }, 0.4);
+        tl.fromTo(targetClass, { scale: 0.5, opacity: 0, y: 30 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.3, stagger: 0.03 }, 0.2);
       }
+
+      // Phase 2: Zoom Past Camera (0.5 to 1.0)
+      // Elements scale up massively and fade out as if the camera passed through them
+      tl.to('.about-left', { scale: 8, opacity: 0, x: -500, rotateY: -30, duration: 0.5, ease: 'power2.in' }, 0.5);
+      tl.to('.about-right', { scale: 8, opacity: 0, x: 500, rotateY: 30, duration: 0.5, ease: 'power2.in' }, 0.5);
+      tl.to('.about-header', { scale: 12, opacity: 0, z: 500, duration: 0.5, ease: 'power2.in' }, 0.52);
 
       // Sync timeline with scroll progress
       tl.progress(localProgress);

@@ -104,7 +104,7 @@ const fragmentShader = `
     O.rgb *= uIntensity;
     // Alpha = brightness of rim — void centre is transparent, rim is opaque.
     // This lets the CSS starfield/lemniscates/comets show through the dark void.
-    O.a = max(max(O.r, O.g), O.b);
+    O.a = clamp(max(max(O.r, O.g), O.b), 0.0, 1.0);
 
     gl_FragColor = O;
   }

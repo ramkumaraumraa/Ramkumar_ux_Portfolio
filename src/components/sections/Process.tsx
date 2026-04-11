@@ -66,19 +66,37 @@ export default function Process() {
       // Initial State
       gsap.set(cards, { opacity: 0, z: -800, y: 100, rotationX: 15, scale: 0.8 });
 
-      // Build Entrance Timeline scrubbed by localProgress
+      // Build Portal Timeline scrubbed by localProgress
       const tl = gsap.timeline({ paused: true });
-      tl.to(cards, {
+      
+      // Phase 1: Enter (0.0 to 0.5)
+      tl.fromTo(cards, {
+        opacity: 0,
+        z: -1000,
+        scale: 0.1,
+        rotationX: 30
+      }, {
         opacity: 1,
         z: 0,
-        y: 0,
-        rotationX: 0,
         scale: 1,
-        duration: 2,
-        ease: 'power3.out',
-        stagger: 0.1,
+        rotationX: 0,
+        duration: 0.5,
+        ease: 'power2.out',
+        stagger: 0.05,
         force3D: true,
-      });
+      }, 0);
+
+      // Phase 2: Exit Portal (0.5 to 1.0)
+      tl.to(cards, {
+        z: 1000,
+        scale: 12,
+        opacity: 0,
+        rotationX: -45,
+        duration: 0.5,
+        ease: 'power2.in',
+        stagger: 0.03,
+        force3D: true,
+      }, 0.5);
 
       entranceTlRef.current = tl;
     }, sectionRef);

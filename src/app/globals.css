@@ -4,7 +4,7 @@
 @import "../styles/index.css";
 @import "../styles/styles.css";
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: 'Lexend Deca', sans-serif;
@@ -27,28 +27,57 @@
 }
 
 :root {
-  --background: #020c1b;
+  --background: #020208;
   --foreground: #ffffff;
   --section-shell-top-pad: 110px;
   --section-shell-bottom-pad: 126px;
+  
+  --nebula-color-1: rgba(0, 255, 255, 0.08); /* Turquoise */
+  --nebula-color-2: rgba(183, 0, 255, 0.06); /* Purple */
+  --nebula-color-3: rgba(0, 162, 255, 0.07); /* Blue */
+  --nebula-color-4: rgba(255, 0, 255, 0.05); /* Magenta */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #020c1b;
+    --background: #020208;
     --foreground: #ffffff;
   }
 }
 
 html {
-  /* Deep space fallback — shows if nebula hasn't loaded yet */
-  background: #020208;
+  /* Transparent so the #nebula-bg layer is the proper base — never override here */
+  background: transparent;
 }
 
 body {
-  background: transparent; /* Let #nebula-bg show through */
+  /* Transparent — #nebula-bg handles the background color at z-index -10 */
+  background: transparent;
   color: var(--foreground);
   font-family: var(--font-sans);
+  overflow-x: hidden;
+  position: relative;
+}
+
+#nebula-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2000;
+  /* This is the true deep-space base — html and body are transparent above */
+  background-color: var(--background);
+  background-image: 
+    radial-gradient(circle at 20% 30%, var(--nebula-color-1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, var(--nebula-color-2) 0%, transparent 45%),
+    radial-gradient(circle at 40% 80%, var(--nebula-color-3) 0%, transparent 55%),
+    radial-gradient(circle at 70% 70%, var(--nebula-color-4) 0%, transparent 50%);
+  background-size: 200% 200%;
+  animation: nebula-drift 20s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes nebula-drift {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
 }
 
 /* Sticky section label — sits at top of each section and pins until scrolled past */

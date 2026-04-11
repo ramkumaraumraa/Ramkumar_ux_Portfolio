@@ -47,26 +47,48 @@ const Footer = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ paused: true });
       
+      // Phase 1: Enter (0.0 to 0.5)
       tl.fromTo(
         '.testimonial-wrapper',
-        { opacity: 0, y: 60, z: -100, rotateX: 10 },
+        { opacity: 0, scale: 0.2, z: -1000, rotateX: 20 },
         { 
           opacity: 1, 
-          y: 0, 
+          scale: 1,
           z: 0, 
           rotateX: 0, 
-          stagger: 0.15,
-          duration: 1, 
+          stagger: 0.1,
+          duration: 0.5, 
           ease: 'power2.out'
         },
-        0.2
+        0
       );
 
       tl.fromTo(
         '.footer-contact-plane',
-        { opacity: 0, y: 50, scale: 0.98 },
-        { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power2.out' },
-        0.4
+        { opacity: 0, scale: 0.5, z: -500 },
+        { opacity: 1, scale: 1, z: 0, duration: 0.5, ease: 'power2.out' },
+        0.2
+      );
+
+      // Phase 2: Exit Portal (0.5 to 1.0)
+      tl.to(
+        '.testimonial-wrapper',
+        { 
+          opacity: 0, 
+          scale: 12,
+          z: 1000, 
+          rotateX: -20, 
+          stagger: 0.05,
+          duration: 0.5, 
+          ease: 'power2.in'
+        },
+        0.5
+      );
+
+      tl.to(
+        '.footer-contact-panel',
+        { opacity: 0, scale: 15, z: 1200, duration: 0.5, ease: 'power2.in' },
+        0.55
       );
 
       tlRef.current = tl;

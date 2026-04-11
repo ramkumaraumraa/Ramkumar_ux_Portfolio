@@ -135,16 +135,37 @@ export default function Page() {
         virtualScrollRef.current = targetScrollRef.current;
       }
 
-      const progress = virtualScrollRef.current / VIRTUAL_MAX;
+      // ── MAGNETIC PINNING LOGIC ──
+      // Map raw virtual progress to a stepped curve with plateaus at each section dock
+      const rawProgress = virtualScrollRef.current / VIRTUAL_MAX;
+      
+      const getMappedProgress = (raw: number) => {
+        const docks = [0, 0.25, 0.5, 0.75, 1.0];
+        const plateauWidth = 0.12; // 12% of each segment is a locked plateau
+        
+        for (let i = 0; i < docks.length - 1; i++) {
+          const start = docks[i];
+          const end = docks[i+1];
+          if (raw >= start && raw <= end) {
+            const seg = (raw - start) / (end - start);
+            if (seg < plateauWidth) return start;
+            if (seg > 1 - plateauWidth) return end;
+            const t = (seg - plateauWidth) / (1 - 2 * plateauWidth);
+            const smoothT = t * t * (3 - 2 * t);
+            return start + smoothT * (end - start);
+          }
+        }
+        return raw;
+      };
+
+      const progress = getMappedProgress(rawProgress);
       const rawDelta = virtualScrollRef.current - lastVirtual;
 
       if (progress !== scrollProgressRef.current || Math.abs(rawDelta) > 0.01) {
         scrollProgressRef.current = progress;
         
-        // Only dynamically track sections if we aren't warping. Warping locks the destination early.
-        if (!isNavJumpRef.current) {
-          updateSection(progress);
-        }
+        // Update active section based on the MAPPED progress
+        updateSection(progress);
         
         ScrollTrigger.update();
 

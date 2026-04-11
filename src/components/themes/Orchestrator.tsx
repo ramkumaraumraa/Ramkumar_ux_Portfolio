@@ -9,6 +9,7 @@ import CameraRig from './CameraRig';
 import { EffectComposer, Bloom, Noise } from '@react-three/postprocessing';
 import { SECTION_THRESHOLDS, SECTION_IDS } from '@/lib/scrollConstants';
 
+
 const SECTION_FX: Record<string, { bloom: number; noise: number }> = {
   home:    { bloom: 1.8,  noise: 0.015 },
   works:   { bloom: 0.9,  noise: 0.02  },
@@ -138,7 +139,7 @@ export default function Orchestrator({
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        zIndex: 1,
+        zIndex: -1500,
         opacity: canvasReady ? 1 : 0,
         transition: 'opacity 0.6s ease-out'
       }}
@@ -156,13 +157,16 @@ export default function Orchestrator({
             near: 0.1,
             far: 200
           }}
-          gl={{
-            alpha: true,
-            antialias: true,
-            toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: 1.2,
-            powerPreference: 'high-performance'
-          }}
+      gl={{
+        alpha: true,
+        antialias: true,
+        stencil: false,
+        depth: true,
+        premultipliedAlpha: false,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.2,
+        powerPreference: 'high-performance'
+      }}
           dpr={[1, responsive.isTablet ? 1.5 : 2]}
           style={{
             position: 'absolute',
@@ -187,19 +191,30 @@ export default function Orchestrator({
               intensityRef={intensityRef}
             />
 
-            <EffectComposer multisampling={0}>
-              <Bloom
-                intensity={currentFx.bloom}
-                luminanceThreshold={0.8}
-                luminanceSmoothing={0.1}
-                mipmapBlur
-              />
-              <Noise opacity={currentFx.noise} />
-            </EffectComposer>
+            <PostEffects currentFx={currentFx} />
 
             <Preload all />
           </Suspense>
         </Canvas>
     </div>
+  );
+}
+
+function PostEffects({ currentFx }: { currentFx: any }) {
+  // Ensure the composer maintains transparency for the CSS background
+  return (
+    <EffectComposer 
+      multisampling={0} 
+      frameBufferType={THREE.HalfFloatType}
+      stencilBuffer={false}
+    >
+      <Bloom
+        intensity={currentFx.bloom}
+        luminanceThreshold={0.8}
+        luminanceSmoothing={0.1}
+        mipmapBlur
+      />
+      <Noise opacity={currentFx.noise} />
+    </EffectComposer>
   );
 }

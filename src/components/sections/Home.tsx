@@ -2,6 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
+import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 const TEXTS = [
   { pre: 'HUMANIZING', main: 'TECH THROUGH', post: 'DESIGN', colorClass: 'turquoise' },
@@ -43,27 +44,50 @@ export default function Home({ activeSection = 'home' }: { activeSection?: strin
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // GSAP Entrance/Exit animation from the old HomeOverlay
   const hasAnimatedIn = useRef(false);
+
+  const localProgress = useSectionProgress(0); // Home is index 0
+
+  useEffect(() => {
+    const block = blockRef.current;
+    if (!block || !hasAnimatedIn.current) return;
+
+    // Use localProgress to drive the Zoom Past (Portal) effect
+    // 0.0 to 0.5: Approaching (For circular scroll from Footer)
+    // 0.5: Docked
+    // 0.5 to 1.0: Zooming Past (Flying to Works)
+    
+    if (localProgress <= 0.5) {
+      const enterP = localProgress * 2; // Map 0-0.5 to 0-1
+      gsap.to(block, { 
+        z: (1 - enterP) * -600, 
+        scale: 0.2 + enterP * 0.8, 
+        opacity: enterP, 
+        duration: 0.2, 
+        overwrite: 'auto' 
+      });
+    } else {
+      const exitP = (localProgress - 0.5) * 2; // Map 0.5-1 to 0-1
+      gsap.to(block, { 
+        z: exitP * 1000, 
+        scale: 1 + exitP * 12, 
+        opacity: 1 - exitP, 
+        duration: 0.2, 
+        overwrite: 'auto' 
+      });
+    }
+  }, [localProgress]);
+
   useEffect(() => {
     const block = blockRef.current;
     if (!block) return;
-
-    if (!hasAnimatedIn.current) {
-       hasAnimatedIn.current = true;
-       gsap.fromTo(
-          block,
-          { z: -600, scale: 1.8, opacity: 0 },
-          { z: 0, scale: 1, opacity: 1, duration: 1.8, ease: 'power3.out', force3D: true }
-       );
-    } else {
-       if (activeSection !== 'home') {
-          gsap.to(block, { z: -300, opacity: 0, duration: 0.6, ease: 'power2.in', force3D: true });
-       } else {
-          gsap.to(block, { z: 0, opacity: 1, duration: 0.6, ease: 'power2.out', force3D: true });
-       }
-    }
-  }, [activeSection]);
+    hasAnimatedIn.current = true;
+    gsap.fromTo(
+      block,
+      { z: -600, scale: 0.1, opacity: 0 },
+      { z: 0, scale: 1, opacity: 1, duration: 2.5, ease: 'power4.out', force3D: true }
+    );
+  }, []);
 
   const createTextElements = useCallback(() => {
     if (!blockRef.current) return null;

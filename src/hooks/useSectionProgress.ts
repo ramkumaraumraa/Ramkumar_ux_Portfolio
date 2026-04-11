@@ -4,14 +4,16 @@ import { useState, useEffect } from 'react';
 import { SECTION_Z_POSITIONS, TOTAL_DEPTH, VISIBLE_RANGE } from '@/lib/scrollConstants';
 
 /**
- * Returns localProgress: 0 → 1 as the virtual camera approaches a section's dock position.
+ * Returns localProgress: 0 → 1 as the virtual camera moves through a section's influence range.
  * 
- * - 0: Camera is 8+ units away (Section is invisible or a tiny dot).
- * - 0 to 1: Camera is approaching (Section zooms in and fades in).
- * - 1: Camera is exactly docked (Section is fully visible and interactive).
+ * - 0.0: Section is in the distance (invisible).
+ * - 0.0 to 0.5: Approaching (Section zooms in and fades in).
+ * - 0.5: Exactly docked (Section is fully visible and interactive).
+ * - 0.5 to 1.0: Passing through (Section zooms past the camera and fades out).
+ * - 1.0: Section is far behind the camera.
  * 
- * @param sectionIndex The index of the section in SECTION_IDS (0=home, 1=works, etc.)
- * @param delayRatio Optional ratio (0 to 1) of the VISIBLE_RANGE to wait before progress begins. Use for DOM HTML to reveal later than 3D backgrounds.
+ * @param sectionIndex The index of the section in SECTION_IDS
+ * @param delayRatio Optional ratio (0 to 1) to wait during the approach phase.
  */
 export function useSectionProgress(sectionIndex: number, delayRatio: number = 0): number {
   const [localProgress, setLocalProgress] = useState(0);
@@ -24,39 +26,26 @@ export function useSectionProgress(sectionIndex: number, delayRatio: number = 0)
       if (!detail) return;
       
       const progress = detail.progress as number;
-      // Convert 0-1 progress to world Z coordinate
       const cameraZ = -progress * TOTAL_DEPTH;
       
-      // Straight linear distance — no wrap-around.
-      // cameraZ is always in (-60, 0] so wrap math is not needed and
-      // would incorrectly equate home (Z=0) with footer (Z=-60).
-      const distance = Math.abs(cameraZ - dockZ);
+      // Calculate signed distance: + means approaching from front, - means passing behind
+      const signedDistance = cameraZ - dockZ;
       
-      // Map distance to a raw 0-1 progress
-      const rawLocal = Math.max(0, 1 - distance / VISIBLE_RANGE);
+      // Total range of influence is ±VISIBLE_RANGE
+      // We map [-VISIBLE_RANGE, +VISIBLE_RANGE] to [1, 0] so 0 is docked
+      // Wait, let's map it so 0.5 is docked (signedDistance = 0)
+      // If signedDistance = +VISIBLE_RANGE (approaching front): progress = 0
+      // If signedDistance = 0 (docked): progress = 0.5
+      // If signedDistance = -VISIBLE_RANGE (behind): progress = 1.0
       
-      // Delay the actual localProgress if delayRatio > 0
-      let currentLocal = rawLocal;
-      if (delayRatio > 0) {
-        currentLocal = Math.max(0, (rawLocal - delayRatio) / (1 - delayRatio));
-      }
+      const rawLocal = 0.5 - (signedDistance / (VISIBLE_RANGE * 2));
+      const clampedLocal = Math.max(0, Math.min(1, rawLocal));
       
-      setLocalProgress(currentLocal);
+      setLocalProgress(clampedLocal);
     };
 
     window.addEventListener('virtual-scroll', onScroll, { passive: true });
-    
-    // Initial check in case we're already near a section
-    // (Wait for next tick to ensure constants are loaded and DOM is ready)
-    const timer = setTimeout(() => {
-       // We don't have the initial scroll value here easily, 
-       // but the virtual-scroll event will fire immediately on first movement.
-    }, 0);
-
-    return () => {
-      window.removeEventListener('virtual-scroll', onScroll);
-      clearTimeout(timer);
-    };
+    return () => window.removeEventListener('virtual-scroll', onScroll);
   }, [sectionIndex]);
 
   return localProgress;
