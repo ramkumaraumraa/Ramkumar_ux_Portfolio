@@ -102,10 +102,10 @@ const fragmentShader = `
     );
 
     O.rgb *= uIntensity;
-    // Alpha: rim brightness drives opacity, but we keep a minimum floor (0.22)
+    // Alpha: rim brightness drives opacity, but we keep a minimum floor (0.8)
     // so the accretion disk is always visible at rest, not just while scrolling.
     float rimBrightness = clamp(max(max(O.r, O.g), O.b), 0.0, 1.0);
-    O.a = mix(0.22, 1.0, rimBrightness);
+    O.a = mix(0.8, 1.0, rimBrightness);
 
     gl_FragColor = O;
   }

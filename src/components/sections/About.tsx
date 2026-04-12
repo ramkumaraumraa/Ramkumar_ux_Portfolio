@@ -150,7 +150,8 @@ const About = () => {
   };
 
   return (
-    <section ref={aboutRef} id="about" className="about-expertise-section">
+    <div className="about-wrapper" style={{ minHeight: '100%', display: 'flex', alignItems: 'center', width: '100%' }}>
+      <section ref={aboutRef} id="about" className="about-expertise-section">
       <div className="about-left">
         <div className="profile-visual">
           <div className="profile-image-container">
@@ -290,6 +291,7 @@ const About = () => {
         </div>
       )}
     </section>
+    </div>
   );
 };
 

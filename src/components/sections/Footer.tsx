@@ -113,7 +113,8 @@ const Footer = () => {
   }, [localProgress]);
 
   return (
-    <section ref={footerRef} id="footer" className="footer-testimonials-section">
+    <div className="footer-wrapper" style={{ minHeight: '100%', display: 'flex', alignItems: 'center', width: '100%' }}>
+      <section ref={footerRef} id="footer" className="footer-testimonials-section">
       <div className="footer-testimonial-plane">
         {featuredTestimonials.map((testimonial, index) => {
           const isFeatured = testimonial.variant === 'featured';
@@ -221,6 +222,7 @@ const Footer = () => {
 
       <Form isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
     </section>
+    </div>
   );
 };
 

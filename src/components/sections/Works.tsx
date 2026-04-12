@@ -169,9 +169,12 @@ const Works = () => {
     // without killing the main timeline properties
     if (hoverTweens.current[index]) hoverTweens.current[index]?.kill();
 
+    // Set z-index immediately to prevent overlap issues during the tween
+    gsap.set(card, { zIndex: 100 });
+
     hoverTweens.current[index] = gsap.to(card, {
       scale: positions[index].scale + 0.1,
-      zIndex: 50,
+      opacity: 1,
       rotation: 0, // Straighten the hovered card
       duration: 0.5,
       ease: 'power3.out',
@@ -249,9 +252,9 @@ const Works = () => {
             </div>
 
             {/* Content Container */}
-            <div className="absolute top-1/2 bottom-0 w-full p-5 md:p-6 flex flex-col justify-end">
+            <div className="absolute inset-0 top-[35%] w-full p-5 md:p-6 flex flex-col justify-end">
               {/* Background Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
               
               <div className="relative z-10 flex flex-col gap-2">
                 {/* Card Title — always visible, sits at top of content area */}
@@ -260,9 +263,9 @@ const Works = () => {
                 </p>
                 
                 {/* Full Description — revealed on hover, no clamp */}
-                <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-out">
-                  <div className="overflow-hidden">
-                    <p className="footnote" style={{ color: 'rgba(212, 212, 212, 0.9)', paddingTop: '4px', margin: 0 }}>
+                <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-500 ease-out">
+                  <div className="overflow-hidden min-h-0">
+                    <p className="footnote text-neutral-300 pt-1 m-0">
                       {card.description}
                     </p>
                   </div>

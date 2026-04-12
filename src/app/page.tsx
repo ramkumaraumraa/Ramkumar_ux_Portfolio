@@ -101,12 +101,8 @@ export default function Page() {
     const tick = () => {
       const prev = virtualScrollRef.current;
 
-      targetScrollRef.current = ((targetScrollRef.current % VIRTUAL_MAX) + VIRTUAL_MAX) % VIRTUAL_MAX;
-
+      targetScrollRef.current = Math.max(0, Math.min(VIRTUAL_MAX, targetScrollRef.current));
       let diff = targetScrollRef.current - prev;
-      if (Math.abs(diff) > VIRTUAL_MAX / 2) {
-        diff -= Math.sign(diff) * VIRTUAL_MAX;
-      }
 
       const currentProgress = prev / VIRTUAL_MAX;
 
@@ -114,8 +110,7 @@ export default function Page() {
       let isNearDock = false;
       for (const t of SECTION_THRESHOLDS) {
         const d = Math.abs(currentProgress - t);
-        const wrappedD = Math.min(d, 1 - d);
-        if (wrappedD < SNAP_RADIUS) {
+        if (d < SNAP_RADIUS) {
           isNearDock = true;
           break;
         }
@@ -129,7 +124,7 @@ export default function Page() {
       // Slower dynamic ease if it's a navigation jump
       const dynamicEase = isNavJumpRef.current ? 0.03 : (isNearDock ? 0.025 : 0.07);
       virtualScrollRef.current += diff * dynamicEase;
-      virtualScrollRef.current = ((virtualScrollRef.current % VIRTUAL_MAX) + VIRTUAL_MAX) % VIRTUAL_MAX;
+      virtualScrollRef.current = Math.max(0, Math.min(VIRTUAL_MAX, virtualScrollRef.current));
 
       if (isTargetMet) {
         virtualScrollRef.current = targetScrollRef.current;
@@ -199,24 +194,79 @@ export default function Page() {
 
     rafIdRef.current = requestAnimationFrame(tick);
 
-    const WHEEL_MULT = 1.4;
-    const TOUCH_MULT = 2.5;
+    const cooldownMs = 1000; // Time locked out after a jump
+    let lastJumpTime = 0;
+
+    const triggerJump = (direction: 'next' | 'prev') => {
+      const now = Date.now();
+      if (now - lastJumpTime < cooldownMs) return;
+
+      const currentProgress = scrollProgressRef.current;
+      let currentIndex = 0;
+      let minDiff = Infinity;
+      SECTION_DOCK_PROGRESS.forEach((dock, idx) => {
+        let d = Math.abs(currentProgress - dock);
+        if (d < minDiff) {
+          minDiff = d;
+          currentIndex = idx;
+        }
+      });
+
+      let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+      
+      // Enforce hard stops at the beginning and end
+      if (nextIndex >= SECTION_DOCK_PROGRESS.length) {
+         return; // Hard stop at the bottom (Footer)
+      } else if (nextIndex < 0) {
+         return; // Hard stop at the top (Home)
+      }
+
+      targetScrollRef.current = SECTION_DOCK_PROGRESS[nextIndex] * VIRTUAL_MAX;
+      isNavJumpRef.current = true;
+      lastJumpTime = now;
+      
+      setMobileSwipeCue(direction === 'next' ? 'down' : 'up');
+      setTimeout(() => setMobileSwipeCue(null), 800);
+    };
+
+    let wheelTimeout: NodeJS.Timeout;
 
     const onTouchStart = (e: TouchEvent) => {
       touchStartY.current = e.touches[0].clientY;
     };
 
     if (!responsive.isMobile) {
-      // Desktop: wheel + touch both drive virtual scroll directly.
+      // Desktop: wheel + touch trigger discrete jumps
+      const WHEEL_THRESHOLD = 30; 
+      const TOUCH_THRESHOLD = 40; 
+      let cumulativeWheel = 0;
+
       const onWheel = (e: WheelEvent) => {
         e.preventDefault();
-        targetScrollRef.current += e.deltaY * WHEEL_MULT;
+        cumulativeWheel += e.deltaY;
+        
+        if (cumulativeWheel > WHEEL_THRESHOLD) {
+          triggerJump('next');
+          cumulativeWheel = 0;
+        } else if (cumulativeWheel < -WHEEL_THRESHOLD) {
+          triggerJump('prev');
+          cumulativeWheel = 0;
+        }
+        
+        clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(() => { cumulativeWheel = 0; }, 150);
       };
+
       const onTouchMoveDesktop = (e: TouchEvent) => {
         e.preventDefault();
         const dy = touchStartY.current - e.touches[0].clientY;
-        touchStartY.current = e.touches[0].clientY;
-        targetScrollRef.current += dy * TOUCH_MULT;
+        if (dy > TOUCH_THRESHOLD) {
+          triggerJump('next');
+          touchStartY.current = e.touches[0].clientY;
+        } else if (dy < -TOUCH_THRESHOLD) {
+          triggerJump('prev');
+          touchStartY.current = e.touches[0].clientY;
+        }
       };
 
       window.addEventListener('wheel', onWheel, { passive: false });
@@ -230,13 +280,11 @@ export default function Page() {
         window.removeEventListener('touchmove', onTouchMoveDesktop);
         document.documentElement.style.overflow = '';
         document.body.style.overflow = '';
+        clearTimeout(wheelTimeout);
       };
     }
 
     // Mobile — boundary-aware touch navigation.
-    // Swipe inside a scrollable section panel scrolls the content natively.
-    // At the top/bottom edge of a panel, or outside any scrollable element,
-    // the swipe drives the virtual scroll so users can navigate between sections.
     const getScrollableAncestor = (el: Element | null): Element | null => {
       while (el && el !== document.documentElement) {
         if (el.scrollHeight > el.clientHeight + 1) {
@@ -248,34 +296,27 @@ export default function Page() {
       return null;
     };
 
+    const TOUCH_THRESHOLD_MOBILE = 30;
+
     const onTouchMoveMobile = (e: TouchEvent) => {
       const dy = touchStartY.current - e.touches[0].clientY;
-      touchStartY.current = e.touches[0].clientY;
-
       const scrollable = getScrollableAncestor(e.target as Element);
 
       if (scrollable) {
         const atTop = scrollable.scrollTop <= 0;
         const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
 
-        if ((dy > 0 && atBottom) || (dy < 0 && atTop)) {
-          // At a scroll boundary — hand off to virtual section navigation.
+        if ((dy > TOUCH_THRESHOLD_MOBILE && atBottom) || (dy < -TOUCH_THRESHOLD_MOBILE && atTop)) {
           e.preventDefault();
-          targetScrollRef.current += dy * TOUCH_MULT;
-          
-          // Show visual cue for mobile
-          setMobileSwipeCue(dy > 0 ? 'down' : 'up');
-          setTimeout(() => setMobileSwipeCue(null), 800);
+          triggerJump(dy > 0 ? 'next' : 'prev');
+          touchStartY.current = e.touches[0].clientY;
         }
-        // else: content not at edge, let native scrolling handle it.
       } else {
-        // Not inside any scrollable element — drive virtual navigation.
-        e.preventDefault();
-        targetScrollRef.current += dy * TOUCH_MULT;
-        
-        // Show visual cue for mobile
-        setMobileSwipeCue(dy > 0 ? 'down' : 'up');
-        setTimeout(() => setMobileSwipeCue(null), 800);
+        if (Math.abs(dy) > TOUCH_THRESHOLD_MOBILE) {
+          e.preventDefault();
+          triggerJump(dy > 0 ? 'next' : 'prev');
+          touchStartY.current = e.touches[0].clientY;
+        }
       }
     };
 
