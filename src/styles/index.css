@@ -439,8 +439,8 @@ html.lenis, html.lenis body {
 }
 
 .button-text {
-  font-family: 'Nunito', sans-serif;
-  font-size: 16px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: var(--font-size-body-2);
   font-weight: 500;
   color: white;
   letter-spacing: 0.5px;
@@ -977,18 +977,15 @@ html.lenis, html.lenis body {
 .section-chrome__title {
   margin: 0;
   color: var(--section-chrome-title);
-  font-family: 'Lexend Deca', sans-serif;
+  font-family: 'Clash Display', 'Arial Black', sans-serif;
   font-size: clamp(1.08rem, 1.25vw + 0.64rem, 1.48rem);
   line-height: 1.1;
-  letter-spacing: 0.015em;
+  letter-spacing: 0.04em;
   font-weight: 600;
   text-align: center;
+  text-shadow: none;
   position: relative;
   z-index: 1;
-  text-shadow:
-    0 0 6px var(--section-chrome-glow),
-    0 0 18px var(--section-chrome-glow),
-    0 0 36px color-mix(in srgb, var(--section-chrome-glow) 55%, transparent);
 }
 
 .section-chrome__char {
@@ -1243,7 +1240,7 @@ html.lenis, html.lenis body {
 }
 
 .site-dock__item-label {
-  font-family: 'Lexend Deca', sans-serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 0.96rem;
   line-height: 1;
   white-space: nowrap;
@@ -1489,7 +1486,7 @@ html.lenis, html.lenis body {
 
   .site-dock__brand-mobile-label {
     display: block;
-    font-family: 'Lexend Deca', sans-serif;
+    font-family: 'Source Sans 3', sans-serif;
     font-size: 0.68rem;
     line-height: 1;
   }

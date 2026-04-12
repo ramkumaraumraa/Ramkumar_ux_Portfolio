@@ -125,7 +125,7 @@ export default function Loader({ onComplete }: LoaderProps) {
             </svg>
             
             <div className="progress-text">
-              <h1 className="progress-number turquoise h1 neon">
+              <h1 className="progress-number">
                 {Math.round(displayProgress)}%
               </h1>
               <p className="progress-label caption-text">
@@ -140,10 +140,10 @@ export default function Loader({ onComplete }: LoaderProps) {
 
         {showWelcome && (
           <div className="welcome-section">
-            <h1 className="welcome-title blue h1 neon" style={{ opacity: 0 }}>
+            <h1 className="welcome-title" style={{ opacity: 0 }}>
               Ramkumar's World of Design
             </h1>
-            <h3 className="welcome-subtitle turquoise h4 neon" style={{ opacity: 0 }}>
+            <h3 className="welcome-subtitle" style={{ opacity: 0 }}>
               is ready for you
             </h3>
           </div>

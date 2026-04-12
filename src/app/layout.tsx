@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Lexend_Deca, JetBrains_Mono } from "next/font/google";
+import { Source_Sans_3, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const lexendDeca = Lexend_Deca({
-  variable: "--font-lexend-deca",
+const sourceSans3 = Source_Sans_3({
+  variable: "--font-source-sans-3",
   subsets: ["latin"],
   display: "swap",
 });
@@ -29,8 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${lexendDeca.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${sourceSans3.variable} ${jetbrainsMono.variable}`}>
       <head>
+        <link href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://use.typekit.net/pwm3hft.css" />
       </head>
       <body className="antialiased min-h-screen">

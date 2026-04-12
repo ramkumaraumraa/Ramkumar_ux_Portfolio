@@ -102,9 +102,10 @@ const fragmentShader = `
     );
 
     O.rgb *= uIntensity;
-    // Alpha = brightness of rim — void centre is transparent, rim is opaque.
-    // This lets the CSS starfield/lemniscates/comets show through the dark void.
-    O.a = clamp(max(max(O.r, O.g), O.b), 0.0, 1.0);
+    // Alpha: rim brightness drives opacity, but we keep a minimum floor (0.22)
+    // so the accretion disk is always visible at rest, not just while scrolling.
+    float rimBrightness = clamp(max(max(O.r, O.g), O.b), 0.0, 1.0);
+    O.a = mix(0.22, 1.0, rimBrightness);
 
     gl_FragColor = O;
   }

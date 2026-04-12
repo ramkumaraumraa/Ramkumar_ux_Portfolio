@@ -249,31 +249,29 @@ const Works = () => {
             </div>
 
             {/* Content Container */}
-            <div className="absolute top-1/2 bottom-0 w-full p-6 md:p-8 flex flex-col justify-end">
+            <div className="absolute top-1/2 bottom-0 w-full p-5 md:p-6 flex flex-col justify-end">
               {/* Background Gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
               
-              <div className="relative z-10 flex flex-col gap-1 transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                {/* Use div instead of h3 to prevent global CSS from making it huge */}
-                <div className="text-sm md:text-base font-bold text-white tracking-tight leading-snug m-0 p-0">
+              <div className="relative z-10 flex flex-col gap-2">
+                {/* Card Title — always visible, sits at top of content area */}
+                <p className="body-title-4" style={{ margin: 0, padding: 0 }}>
                   {card.title}
-                </div>
+                </p>
                 
-                {/* Expandable Description */}
+                {/* Full Description — revealed on hover, no clamp */}
                 <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-out">
                   <div className="overflow-hidden">
-                    <p className="text-xs md:text-sm text-neutral-300 line-clamp-2 leading-relaxed pt-1">
+                    <p className="footnote" style={{ color: 'rgba(212, 212, 212, 0.9)', paddingTop: '4px', margin: 0 }}>
                       {card.description}
                     </p>
                   </div>
                 </div>
                 
-                <div className="mt-1 flex items-center text-emerald-400 text-xs md:text-sm font-semibold transition-colors duration-300 group-hover:text-emerald-300">
-                  <span className="relative flex items-center gap-2">
-                    Explore the journey
-                    <span className="transform translate-x-0 transition-transform duration-300 group-hover:translate-x-1">
-                      →
-                    </span>
+                {/* Arrow CTA — clean, no duplicate text */}
+                <div className="flex justify-end mt-1">
+                  <span className="text-emerald-400 group-hover:text-emerald-300 transition-colors duration-300 text-base font-semibold transform translate-x-0 group-hover:translate-x-1 transition-transform duration-300">
+                    →
                   </span>
                 </div>
               </div>

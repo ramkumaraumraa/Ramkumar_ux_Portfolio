@@ -159,7 +159,7 @@ body.scroll-locked {
   left: 50%;
   transform: translate(-50%, -50%);
   color: rgba(255, 255, 255, 0.5);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 14px;
   z-index: 1;
 }
@@ -583,7 +583,6 @@ body.scroll-locked {
     align-items: center;
     background: linear-gradient(90deg, rgba(23, 14, 42, 0.5), rgba(0, 26, 43, 0.5));
     color: white;
-    text-transform: uppercase;
     text-decoration: none;
     overflow: hidden;
     transition: background-color 0.3s ease, transform 0.75s ease;
@@ -1060,25 +1059,25 @@ body.scroll-locked {
 
 .expertise-tooltip {
   position: fixed;
-  width: 320px;
+  width: 300px;
   max-width: 90vw;
   background: linear-gradient(135deg, 
-    rgba(0, 14, 35, 0.95),
-    rgba(24, 31, 38, 0.95)
+    rgba(0, 14, 35, 0.97),
+    rgba(24, 31, 38, 0.97)
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 16px 20px;
-  border-radius: 12px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 14px 18px;
+  border-radius: 10px;
   color: #fff;
   pointer-events: none;
   z-index: 10000;
   border: 1px solid rgba(0, 255, 255, 0.2);
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(0, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform-origin: center;
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(0, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform-origin: top left;
 }
 
 .expertise-tooltip::before {
@@ -1455,13 +1454,13 @@ body.scroll-locked {
 .process-section {
   width: 100%;
   max-width: 100%;
-  min-height: 100%;
-  height: 100%;
+  height: calc(100vh - var(--section-shell-top-pad) - var(--section-shell-bottom-pad));
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  padding: 0 var(--section-side-gutter);
+  padding: 3.5vh var(--section-side-gutter) 0;
   box-sizing: border-box;
   color: white;
   position: relative;
@@ -1472,81 +1471,140 @@ body.scroll-locked {
 /* ─── Holographic Data Grid ───────────────────────────────── */
 .holographic-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(1.25rem, 2.5vw, 2.5rem);
   width: 100%;
-  max-width: 900px;
+  max-width: min(1600px, calc(100% - 0px));
   position: relative;
   z-index: 105;
+  align-items: stretch;
+  align-content: center;
 }
 
+/* ── About-panel style glass ──────────────────────────────── */
 .holo-card {
   position: relative;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 24px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top, rgba(0, 196, 255, 0.07), transparent 55%),
+    linear-gradient(180deg, rgba(8, 20, 35, 0.72), rgba(18, 9, 35, 0.62));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(160, 216, 255, 0.13);
+  box-shadow:
+    0 20px 48px rgba(2, 6, 23, 0.32),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transform-style: preserve-3d;
-  will-change: transform, opacity, height, background-color, border-color, box-shadow;
-}
-
-.holo-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  cursor: default;
-}
-
-.holo-icon-wrap {
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.holo-svg {
-  width: 32px;
-  height: 32px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.holo-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.holo-desc {
-  height: 0;
-  opacity: 0;
   overflow: hidden;
-  will-change: height, opacity;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.4s ease;
+}
+
+.holo-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(160, 216, 255, 0.28);
+  box-shadow:
+    0 28px 60px rgba(2, 6, 23, 0.48),
+    0 0 28px rgba(0, 196, 255, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
+}
+
+/* Large Illustration Area */
+.holo-illustration {
+  position: relative;
+  width: 100%;
+  height: clamp(210px, 30vh, 310px);
+  flex-shrink: 0;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 12px;
+  box-sizing: border-box;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Illustration micro-animation on card hover */
+.holo-card:hover .holo-illustration {
+  transform: scale(1.08) rotate(-1deg);
+}
+
+/* Thin divider line beneath illustration */
+.holo-illustration::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(160, 216, 255, 0.18),
+    transparent
+  );
+}
+
+/* Card Text Content — left-aligned */
+.holo-content {
+  padding: 16px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  flex: 1; /* fill remaining card height */
+}
+
+.holo-content .body-title-3 {
+  text-align: left !important;
+  margin: 0 !important;
+}
+
+.holo-content .body-2 {
+  text-align: left !important;
+  margin: 5px 0 0 !important;
+  opacity: 0.8;
+}
+
+.holo-content .footnote {
+  text-align: left !important;
+  margin: 10px 0 0 !important;
+  line-height: var(--line-height-relaxed);
+  color: rgba(208, 221, 232, 0.82);
 }
 
 /* =========================================
    RESPONSIVE
    ========================================= */
 
-@media (max-width: 768px) {
+@media (max-width: 1100px) {
+  .holographic-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    max-width: 680px;
+  }
+
+  .holo-illustration {
+    height: clamp(170px, 24vh, 230px);
+  }
+}
+
+@media (max-width: 700px) {
   .holographic-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
-    padding-bottom: 2rem;
+    gap: 0.875rem;
+    max-width: 420px;
+    padding-bottom: 1.5rem;
+  }
+
+  .holo-illustration {
+    height: clamp(150px, 22vh, 200px);
+    padding: 20px 20px 10px;
   }
 }
   

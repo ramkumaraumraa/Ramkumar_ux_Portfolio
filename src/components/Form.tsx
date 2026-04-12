@@ -185,7 +185,7 @@ const Form = ({ isOpen, onClose }: FormProps) => {
           </button>
 
           <div style={{ marginTop: '16px' }}>
-            <h5 className="turquoise h5 neon" style={{ marginBottom: '8px', textAlign: 'center' }}>
+            <h5 style={{ marginBottom: '8px', textAlign: 'center' }}>
               Let's Create Something Great Together!
             </h5>
             <p className="body-2" style={{ textAlign: 'center', marginBottom: '32px', opacity: 0.9 }}>
@@ -367,9 +367,9 @@ const Form = ({ isOpen, onClose }: FormProps) => {
         .contact-form label {
           color: #ffffff;
           margin-bottom: 4px;
-          font-family: 'Nunito', sans-serif;
-          font-size: 18px;
-          line-height: 28px;
+          font-family: 'Source Sans 3', sans-serif;
+          font-size: var(--font-size-sub-header-3);
+          line-height: var(--line-height-normal);
           font-weight: 600;
         }
 
@@ -382,9 +382,9 @@ const Form = ({ isOpen, onClose }: FormProps) => {
           backdrop-filter: blur(1px);
           color: #ffffff;
           outline: none;
-          font-family: 'Nunito', sans-serif;
-          font-size: 16px;
-          line-height: 24px;
+          font-family: 'Source Sans 3', sans-serif;
+          font-size: var(--font-size-body-2);
+          line-height: var(--line-height-relaxed);
           transition: all 0.3s ease;
         }
 
@@ -408,9 +408,9 @@ const Form = ({ isOpen, onClose }: FormProps) => {
 
         .response-time {
           color: #efefef;
-          font-family: 'Nunito', sans-serif;
-          font-size: 14px;
-          line-height: 20px;
+          font-family: 'Source Sans 3', sans-serif;
+          font-size: var(--font-size-footnote);
+          line-height: var(--line-height-relaxed);
           font-weight: 400;
         }
 

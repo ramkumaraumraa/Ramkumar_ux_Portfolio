@@ -17,19 +17,19 @@ const About = () => {
 
   const expertiseData = [
     {
-      title: "Design Workshops & Mentorship",
+      title: "Design workshops & mentorship",
       description: "Conduct interactive workshops or training sessions to educate teams and aspiring designers on UX best practices, methodologies, and strategies."
     },
     {
-      title: "Branding, Design Systems, & Audits",
+      title: "Branding, design systems & audits",
       description: "I develop scalable design systems and libraries that ensure consistent, efficient product development and brand alignment, while conducting in-depth UX audits to enhance usability, accessibility, and overall user satisfaction across websites, mobile apps, and digital platforms."
     },
     {
-      title: "Websites, & Mobile Apps",
+      title: "Websites & mobile apps",
       description: "Create responsive, high-performing websites and landing pages designed to captivate users, generate leads, and drive conversions."
     },
     {
-      title: "IoT, Mobility, SaaS, & AI Products",
+      title: "IoT, mobility, SaaS & AI products",
       description: "I design intuitive mobility smart systems and digital products that align user needs with business goals, while leveraging human-centered AI principles to craft conversational UIs, ethical systems, and inclusive experiences."
     },
   ];
@@ -98,36 +98,15 @@ const About = () => {
 
   const handleExpertiseMouseMove = (e: React.MouseEvent) => {
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    const offsetX = 15;
-    const offsetY = 10;
-    const tooltipWidth = 320;
-    const tooltipHeight = 100;
-
-    let placement = "right";
-    let x = e.clientX + offsetX;
-    let y = e.clientY + offsetY;
-
-    if (x + tooltipWidth > viewportWidth - 20) {
-      placement = "left";
-      x = e.clientX - tooltipWidth - offsetX;
+    const tooltipWidth = 300;
+    // Stay close to cursor — 18px offset to the right, slightly up
+    let x = e.clientX + 18;
+    const y = e.clientY - 10;
+    // Flip to left if too close to right edge
+    if (x + tooltipWidth > viewportWidth - 16) {
+      x = e.clientX - tooltipWidth - 18;
     }
-
-    if (y + tooltipHeight > viewportHeight - 20) {
-      y = e.clientY - tooltipHeight - offsetY;
-    }
-
-    if (x < 20) {
-      x = 20;
-      placement = "right";
-    }
-
-    if (y < 20) {
-      y = 20;
-    }
-
-    setTooltipPlacement(placement);
+    setTooltipPlacement(x < e.clientX ? "left" : "right");
     setTooltipPosition({ x, y });
   };
 
@@ -194,7 +173,7 @@ const About = () => {
           rel="noopener noreferrer"
           aria-label="Download Ramkumar's Resume PDF"
         >
-          Download Resume
+          Download resume
           <span></span>
           <span></span>
           <span></span>
@@ -221,8 +200,8 @@ const About = () => {
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
           >
-            <h5 className="pink h5 neon">25+</h5>
-            <p className="caption-text-label">PRODUCTS DESIGNED</p>
+            <h5>25+</h5>
+            <p className="caption-text-label">Products designed</p>
           </div>
 
           <div
@@ -230,8 +209,8 @@ const About = () => {
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
           >
-            <h5 className="pink h5 neon">100+</h5>
-            <p className="caption-text-label">FEATURES DEVELOPED</p>
+            <h5>100+</h5>
+            <p className="caption-text-label">Features developed</p>
           </div>
 
           <div
@@ -239,8 +218,8 @@ const About = () => {
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
           >
-            <h5 className="pink h5 neon">500+</h5>
-            <p className="caption-text-label">RESEARCH ORCHESTRATED</p>
+            <h5>500+</h5>
+            <p className="caption-text-label">Research orchestrated</p>
           </div>
         </div>
 

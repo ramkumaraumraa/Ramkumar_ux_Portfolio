@@ -7,7 +7,7 @@
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Lexend Deca', sans-serif;
+  --font-sans: 'Source Sans 3', sans-serif;
   
   --color-turquoise: #00ffff;
   --color-blue: #00a2ff;
@@ -29,8 +29,8 @@
 :root {
   --background: #020208;
   --foreground: #ffffff;
-  --section-shell-top-pad: 110px;
-  --section-shell-bottom-pad: 126px;
+  --section-shell-top-pad: 60px;
+  --section-shell-bottom-pad: 80px;
   
   --nebula-color-1: rgba(0, 255, 255, 0.08); /* Turquoise */
   --nebula-color-2: rgba(183, 0, 255, 0.06); /* Purple */

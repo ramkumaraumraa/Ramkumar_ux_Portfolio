@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
@@ -9,7 +9,7 @@ const processSteps = [
   {
     id: 1,
     title: "01. Strategizing",
-    subtitle: "Laying the Foundation for Success",
+    subtitle: "Laying the foundation for success",
     description:
       "I dive deep into uncovering core challenges and aspirations of clients and stakeholders. Through comprehensive exploration, I create detailed wireframes that align with strategic goals.",
     colorClass: "turquoise",
@@ -19,7 +19,7 @@ const processSteps = [
   {
     id: 2,
     title: "02. Discovery",
-    subtitle: "Transforming Concepts into Prototypes",
+    subtitle: "Transforming concepts into prototypes",
     description:
       "Guided by a problem-solving mindset, I transform complex ideas into interactive prototypes. This approach provides a compelling vision of the end product before development begins.",
     colorClass: "pink",
@@ -29,7 +29,7 @@ const processSteps = [
   {
     id: 3,
     title: "03. Creation",
-    subtitle: "Orchestrating Seamless Collaboration",
+    subtitle: "Orchestrating seamless collaboration",
     description:
       "Bridging stakeholders and users is key. I drive collaboration with developers and stakeholders, ensuring a fluid process from inception to post-launch.",
     colorClass: "blue",
@@ -39,7 +39,7 @@ const processSteps = [
   {
     id: 4,
     title: "04. Optimizing",
-    subtitle: "Refining Through Rigorous Testing",
+    subtitle: "Refining through rigorous testing",
     description:
       "Continuous improvement is at the core of my process. I rigorously test designs through multiple methodologies, ensuring every interaction is purposeful.",
     colorClass: "turquoise",
@@ -51,7 +51,7 @@ const processSteps = [
 export default function Process() {
   const sectionRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const svgRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const localProgress = useSectionProgress(3, 0.5);
   const entranceTlRef = useRef<gsap.core.Timeline | null>(null);
@@ -68,7 +68,7 @@ export default function Process() {
 
       // Build Portal Timeline scrubbed by localProgress
       const tl = gsap.timeline({ paused: true });
-      
+
       // Phase 1: Enter (0.0 to 0.5)
       tl.fromTo(cards, {
         opacity: 0,
@@ -96,7 +96,7 @@ export default function Process() {
         stagger: 0.03,
         force3D: true,
       }, 0.5);
-      
+
       tl.to(cards, {
         opacity: 0,
         duration: 0.25,
@@ -105,6 +105,20 @@ export default function Process() {
       }, 0.5);
 
       entranceTlRef.current = tl;
+
+      // GSAP floating animations for each SVG illustration
+      svgRefs.current.forEach((svgEl, i) => {
+        if (!svgEl) return;
+        gsap.to(svgEl, {
+          y: i % 2 === 0 ? -14 : -10,
+          rotation: i % 2 === 0 ? 2.5 : -2.5,
+          duration: 3 + i * 0.4,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+          delay: i * 0.5,
+        });
+      });
     }, sectionRef);
 
     return () => ctxRef.current?.revert();
@@ -116,68 +130,46 @@ export default function Process() {
     }
   }, [localProgress]);
 
-  // Handle Holographic Hover Effects
-  const handleMouseEnter = (index: number) => {
-    setHoveredCard(index);
-
-    const cards = document.querySelectorAll('.holo-card');
-    cards.forEach((card, i) => {
-      if (i === index) {
-        // Expand the hovered card
-        gsap.to(card, { scale: 1.05, borderColor: processSteps[i].accentColor, backgroundColor: 'rgba(255,255,255,0.08)', zIndex: 10, duration: 0.4, ease: 'power2.out' });
-        
-        // Spin SVG
-        const svg = card.querySelector('.holo-svg');
-        gsap.to(svg, { rotation: '+=90', duration: 0.6, ease: 'back.out(1.5)' });
-
-        // Show description
-        const desc = card.querySelector('.holo-desc') as HTMLElement;
-        gsap.to(desc, { height: 'auto', opacity: 1, marginTop: '12px', duration: 0.4, ease: 'power2.out' });
-
-      } else {
-        // Dim other cards
-        gsap.to(card, { scale: 0.95, opacity: 0.3, zIndex: 1, borderColor: 'rgba(255,255,255,0.05)', backgroundColor: 'transparent', duration: 0.4, ease: 'power2.out' });
-        
-        const desc = card.querySelector('.holo-desc');
-        gsap.to(desc, { height: 0, opacity: 0, marginTop: 0, duration: 0.4, ease: 'power2.out' });
-      }
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredCard(null);
-
-    const cards = document.querySelectorAll('.holo-card');
-    cards.forEach((card, i) => {
-      gsap.to(card, { scale: 1, opacity: 1, zIndex: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)', duration: 0.4, ease: 'power2.out' });
-      
-      const desc = card.querySelector('.holo-desc');
-      gsap.to(desc, { height: 0, opacity: 0, marginTop: 0, duration: 0.4, ease: 'power2.out' });
-    });
-  };
-
   return (
-    <section id="process" className="process-section" ref={sectionRef}>
-      <div className="holographic-grid" ref={gridRef} onMouseLeave={handleMouseLeave} style={{ perspective: '1200px' }}>
+    <section
+      id="process"
+      className="process-section"
+      ref={sectionRef}
+    >
+      <div
+        className="holographic-grid"
+        ref={gridRef}
+        style={{ perspective: '1200px', width: '100%' }}
+      >
         {processSteps.map((step, i) => (
           <div
             key={step.id}
-            className="holo-card"
-            onMouseEnter={() => handleMouseEnter(i)}
+            className={`holo-card process-card--${i}`}
           >
-            <div className="holo-header">
-              <div className="holo-icon-wrap" style={{ borderColor: step.accentColor, boxShadow: `0 0 15px ${step.accentColor}40` }}>
-                <div className="holo-svg">
-                  <Image src={step.svgSrc} alt={step.title} fill style={{ objectFit: 'contain' }} />
-                </div>
-              </div>
-              <div className="holo-title-group">
-                <h3 className={`${step.colorClass} neon body-title-4 m-0`}>{step.title}</h3>
-                <p className="body-2 m-0" style={{ opacity: 0.8 }}>{step.subtitle}</p>
-              </div>
+            {/* Large Illustration — flex-grows to fill upper portion */}
+            <div
+              ref={(el) => { svgRefs.current[i] = el; }}
+              className={`holo-illustration ill-${i}`}
+            >
+              <Image
+                src={step.svgSrc}
+                alt={step.title}
+                fill
+                style={{ objectFit: 'contain', objectPosition: 'center' }}
+              />
             </div>
-            <div className="holo-desc">
-              <p className="footnote m-0" style={{ color: '#e0e0e0', lineHeight: 1.6 }}>{step.description}</p>
+
+            {/* Content Area — fixed spacing at the bottom */}
+            <div className="holo-content">
+              <h3 className="body-title-3 mt-2" style={{ textAlign: 'left' }}>
+                {step.title}
+              </h3>
+              <p className="body-2 mt-1" style={{ textAlign: 'left', marginTop: '4px' }}>
+                {step.subtitle}
+              </p>
+              <p className="footnote mt-2" style={{ color: '#d0dde8', lineHeight: 1.65, textAlign: 'left' }}>
+                {step.description}
+              </p>
             </div>
           </div>
         ))}
