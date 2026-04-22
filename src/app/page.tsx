@@ -10,14 +10,10 @@ import Cursor from '../components/Cursor';
 import Navbar from '../components/Navbar';
 import SectionChrome from '../components/themes/SectionChrome';
 import SectionOverlay from '../components/themes/SectionOverlay';
+import SocialSidebar from '../components/StickySidebar';
 
 const Orchestrator = dynamic(() => import('../components/themes/Orchestrator'), { ssr: false });
 const Background     = dynamic(() => import('../components/themes/Background'),  { ssr: false });
-const HomeSection    = dynamic(() => import('../components/sections/Home'),    { ssr: false });
-const WorksSection   = dynamic(() => import('../components/sections/Works'),   { ssr: false });
-const AboutSection   = dynamic(() => import('../components/sections/About'),   { ssr: false });
-const ProcessSection = dynamic(() => import('../components/sections/Process'), { ssr: false });
-const FooterSection  = dynamic(() => import('../components/sections/Footer'),  { ssr: false });
 
 import {
   SECTION_THRESHOLDS,
@@ -26,10 +22,26 @@ import {
   VIRTUAL_MAX
 } from '@/lib/scrollConstants';
 
+type LenisScrollPayload = {
+  scroll: number;
+  progress: number;
+  velocity: number;
+  direction: 1 | -1;
+};
+
+type LenisListener = (payload: LenisScrollPayload) => void;
+
+type LenisShim = {
+  readonly scroll: number;
+  on(event: 'scroll', fn: LenisListener): void;
+  off(event: 'scroll', fn: LenisListener): void;
+  emit(event: 'scroll', data: LenisScrollPayload): void;
+};
+
 export default function Page() {
   const [loaderComplete, setLoaderComplete]   = useState(false);
-  const [backgroundReady, setBackgroundReady] = useState(false);
   const [preparingExit, setPreparingExit]     = useState(false);
+  const [orchestratorReady, setOrchestratorReady] = useState(false);
   const [activeSection, setActiveSection]     = useState('home');
 
   // Virtual scroll state — no proxy div, no window.scrollY
@@ -44,14 +56,19 @@ export default function Page() {
   const [responsive, setResponsive] = useState({ isMobile: false, isTablet: false });
 
   // Full event-emitter shim — Orchestrator's lenis.on('scroll') path works normally
-  const lenisRef = useRef<any>(
+  const lenisRef = useRef<LenisShim>(
     (() => {
-      const listeners: Record<string, Set<Function>> = {};
+      const listeners: Record<'scroll', Set<LenisListener>> = {
+        scroll: new Set<LenisListener>(),
+      };
+
       return {
         get scroll() { return virtualScrollRef.current; },
-        on(event: string, fn: Function)  { (listeners[event] ??= new Set()).add(fn); },
-        off(event: string, fn: Function) { listeners[event]?.delete(fn); },
-        emit(event: string, data: any)   { listeners[event]?.forEach(fn => fn(data)); },
+        on(event: 'scroll', fn: LenisListener)  { listeners[event].add(fn); },
+        off(event: 'scroll', fn: LenisListener) { listeners[event].delete(fn); },
+        emit(event: 'scroll', data: LenisScrollPayload) {
+          listeners[event].forEach((fn) => fn(data));
+        },
       };
     })()
   );
@@ -71,10 +88,19 @@ export default function Page() {
   useEffect(() => {
     const onExit = () => {
       setPreparingExit(true);
-      setTimeout(() => setBackgroundReady(true), 200);
     };
+
+    const onOrchestratorReady = () => {
+      setOrchestratorReady(true);
+    };
+
     window.addEventListener('loader-exiting', onExit);
-    return () => window.removeEventListener('loader-exiting', onExit);
+    window.addEventListener('orchestrator-ready', onOrchestratorReady);
+
+    return () => {
+      window.removeEventListener('loader-exiting', onExit);
+      window.removeEventListener('orchestrator-ready', onOrchestratorReady);
+    };
   }, []);
 
   // ── Detect section from virtual progress ──────────────────────
@@ -102,7 +128,7 @@ export default function Page() {
       const prev = virtualScrollRef.current;
 
       targetScrollRef.current = Math.max(0, Math.min(VIRTUAL_MAX, targetScrollRef.current));
-      let diff = targetScrollRef.current - prev;
+      const diff = targetScrollRef.current - prev;
 
       const currentProgress = prev / VIRTUAL_MAX;
 
@@ -205,14 +231,14 @@ export default function Page() {
       let currentIndex = 0;
       let minDiff = Infinity;
       SECTION_DOCK_PROGRESS.forEach((dock, idx) => {
-        let d = Math.abs(currentProgress - dock);
+        const d = Math.abs(currentProgress - dock);
         if (d < minDiff) {
           minDiff = d;
           currentIndex = idx;
         }
       });
 
-      let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+      const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
       
       // Enforce hard stops at the beginning and end
       if (nextIndex >= SECTION_DOCK_PROGRESS.length) {
@@ -334,16 +360,15 @@ export default function Page() {
 
   // ── Nav-click scroll (jump to section by progress) ───────────
   const handleSetActiveTab = useCallback((tab: string) => {
-    const idx = SECTION_IDS.indexOf(tab as any);
+    const section = SECTION_IDS.find((id) => id === tab);
+    if (!section) return;
+
+    const idx = SECTION_IDS.indexOf(section);
     if (idx < 0) return;
     targetScrollRef.current = SECTION_DOCK_PROGRESS[idx] * VIRTUAL_MAX;
     setActiveSection(tab);
     isNavJumpRef.current = true;
   }, []);
-
-  useEffect(() => {
-    if (backgroundReady) (window as any).backgroundReady = true;
-  }, [backgroundReady]);
 
   // Fix 1: Warm up SectionPanel progress values immediately after loader exits
   useEffect(() => {
@@ -354,15 +379,17 @@ export default function Page() {
   }, [loaderComplete]);
 
   const handleLoaderComplete = () => {
-    gsap.to('.loader', {
-      opacity: 0, duration: 0.5,
-      onComplete: () => setLoaderComplete(true),
-    });
+    setLoaderComplete(true);
   };
 
   return (
     <>
-      {!loaderComplete && <Loader onComplete={handleLoaderComplete} />}
+      {!loaderComplete && (
+        <Loader
+          sceneReady={orchestratorReady}
+          onComplete={handleLoaderComplete}
+        />
+      )}
 
       {/* Mobile Swipe Edge Cue */}
       {mobileSwipeCue && responsive.isMobile && (
@@ -390,26 +417,7 @@ export default function Page() {
         </div>
       )}
 
-      {/* Preload WebGL while loader is still showing */}
-      {preparingExit && !loaderComplete && (
-        <div style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
-          <div className="Background-Animation">
-            <Orchestrator
-              lenis={lenisRef.current}
-              responsive={responsive}
-              intensity={0.1}
-              enabled={true}
-              idleThresholdMs={700}
-              fadeLerpSpeed={0.05}
-              zoomAmount={1.12}
-              modelOffset={2}
-              enableMouse={true}
-            />
-          </div>
-        </div>
-      )}
-
-      {loaderComplete && (
+      {(preparingExit || loaderComplete) && (
         <div style={{ animation: 'fadeIn 1s ease-out' }}>
           {/* ── CSS starfield + lemniscates + comets ── */}
           <Background activeSection={activeSection} />
@@ -440,10 +448,11 @@ export default function Page() {
             activeTab={activeSection}
             setActiveTab={handleSetActiveTab}
           />
-
-          <Cursor />
         </div>
       )}
+
+      {loaderComplete && <SocialSidebar />}
+      {loaderComplete && <Cursor />}
     </>
   );
 }

@@ -78,6 +78,7 @@ export default function Process() {
       }, {
         opacity: 1,
         z: 0,
+        y: 0,
         scale: 1,
         rotationX: 0,
         duration: 0.5,

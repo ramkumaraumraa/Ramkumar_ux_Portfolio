@@ -2,24 +2,41 @@
 
 import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SOCIAL_LINKS } from '@/lib/socialLinks';
 
 const SocialSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
-    handleResize(); // Initial check
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  if (isMobile) {
-    return (
-      <div className="mobile-fab-container">
-        <div className={`fab-menu-items ${isOpen ? 'open' : ''}`}>
+  if (isMobile && mounted) {
+    const fabContent = (
+      <div style={{
+        position: 'fixed',
+        bottom: '116px',
+        right: '16px',
+        zIndex: 99999,
+      }}>
+        {/* Menu items — absolutely positioned ABOVE the trigger button */}
+        <div
+          className={`fab-menu-items ${isOpen ? 'open' : ''}`}
+          style={{
+            position: 'absolute',
+            bottom: 'calc(100% + 10px)',
+            right: '0',
+            flexDirection: 'column-reverse',
+          }}
+        >
           {SOCIAL_LINKS.map((icon, index) => (
             <a
               key={index}
@@ -39,16 +56,28 @@ const SocialSidebar = () => {
             </a>
           ))}
         </div>
-        
-        <button 
+
+        {/* Trigger button */}
+        <button
           className={`fab-trigger ${isOpen ? 'open' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
         >
-          <span className="fab-icon">+</span>
+          <span className="fab-icon">
+            {/* Person/profile icon — clearly "find me online", not "share" */}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px' }}>
+              <circle cx="12" cy="8" r="3.5" />
+              <path d="M5 20a7 7 0 0 1 14 0" />
+            </svg>
+          </span>
         </button>
       </div>
     );
+
+    return createPortal(fabContent, document.body);
   }
+
+
+
 
   // Desktop original sidebar
   return (

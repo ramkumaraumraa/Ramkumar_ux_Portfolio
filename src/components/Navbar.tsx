@@ -69,10 +69,19 @@ function Navbar({ activeTab = "home", setActiveTab = () => {} }: NavbarProps) {
     );
   }, []);
 
-  useEffect(() => {
-    if (!contactButtonRef.current) return;
+  const gradientTweenRef = useRef<gsap.core.Tween | null>(null);
 
-    const tween = gsap.to(contactButtonRef.current, {
+  useEffect(() => {
+    // Kill any existing tween first
+    if (gradientTweenRef.current) {
+      gradientTweenRef.current.kill();
+      gradientTweenRef.current = null;
+    }
+
+    // Only run the spinning gradient border on desktop
+    if (!contactButtonRef.current || isMobile) return;
+
+    gradientTweenRef.current = gsap.to(contactButtonRef.current, {
       "--gradient-angle": "360deg",
       duration: 5.5,
       ease: "none",
@@ -80,9 +89,10 @@ function Navbar({ activeTab = "home", setActiveTab = () => {} }: NavbarProps) {
     } as gsap.TweenVars);
 
     return () => {
-      tween.kill();
+      gradientTweenRef.current?.kill();
+      gradientTweenRef.current = null;
     };
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!dropdownVisible || !dropdownMenuRef.current) return;

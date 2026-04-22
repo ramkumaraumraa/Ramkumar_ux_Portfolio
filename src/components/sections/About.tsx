@@ -154,14 +154,15 @@ const About = () => {
       <section ref={aboutRef} id="about" className="about-expertise-section">
       <div className="about-left">
         <div className="profile-visual">
-          <div className="profile-image-container">
+          <div className="profile-image-container" style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
             <Image
               src="/assets/imgs/About/My Pic 1.png"
               alt="Ramkumar - Senior Product Designer and UX Mentor"
-              fill
+              width={800}
+              height={800}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 42vw, 32vw"
               quality={90}
-              style={{ objectFit: 'contain', objectPosition: 'center top' }}
+              style={{ width: '100%', height: 'auto', objectFit: 'contain', objectPosition: 'center top' }}
               className="profile-image"
               priority
             />

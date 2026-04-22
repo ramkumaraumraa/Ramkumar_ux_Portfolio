@@ -104,14 +104,33 @@ export default function Home({ activeSection = 'home' }: { activeSection?: strin
     container.style.justifyContent = 'center';
     container.style.textAlign = 'center';
     
-    // Helper to format text with spaces
+    // Helper: wrap each word in a nowrap container so mobile breaks between words, not mid-char
     const appendChars = (parent: HTMLElement, text: string) => {
-      [...text].forEach(char => {
-        const span = document.createElement('span');
-        span.className = 'char';
-        span.textContent = char === ' ' ? '\u00A0' : char;
-        span.style.display = 'inline-block';
-        parent.appendChild(span);
+      const words = text.split(' ');
+      words.forEach((word, wi) => {
+        // Word wrapper — keeps chars together, allows line break between words
+        const wordSpan = document.createElement('span');
+        wordSpan.style.display = 'inline-flex';
+        wordSpan.style.whiteSpace = 'nowrap';
+
+        [...word].forEach(char => {
+          const span = document.createElement('span');
+          span.className = 'char';
+          span.textContent = char;
+          span.style.display = 'inline-block';
+          wordSpan.appendChild(span);
+        });
+
+        parent.appendChild(wordSpan);
+
+        // Add a space between words (not inside the nowrap wrapper)
+        if (wi < words.length - 1) {
+          const space = document.createElement('span');
+          space.className = 'char';
+          space.textContent = '\u00A0';
+          space.style.display = 'inline-block';
+          parent.appendChild(space);
+        }
       });
     };
 

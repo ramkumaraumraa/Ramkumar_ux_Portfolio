@@ -125,10 +125,6 @@ export default function Orchestrator({
 
   if (!enabled) return null;
 
-  if (responsive.isMobile) {
-    return null; // The background/overlays are handled in page.tsx for mobile
-  }
-
   return (
     <div 
       className="parallax-canvas-container"
@@ -167,7 +163,7 @@ export default function Orchestrator({
         toneMappingExposure: 1.2,
         powerPreference: 'high-performance'
       }}
-          dpr={[1, responsive.isTablet ? 1.5 : 2]}
+          dpr={[1, (responsive.isMobile || responsive.isTablet) ? 1.5 : 2]}
           style={{
             position: 'absolute',
             top: 0,
