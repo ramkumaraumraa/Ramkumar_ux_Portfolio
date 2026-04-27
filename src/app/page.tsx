@@ -384,6 +384,62 @@ export default function Page() {
 
   return (
     <>
+      {/* SEO semantic layer — crawler-readable, visually hidden from canvas design */}
+      <div className="sr-only">
+        <h1>Ramkumar Ganesh — Senior Product Designer &amp; UX Lead</h1>
+        <p>Senior Product Designer and UX Design Lead with 12+ years of experience designing B2B and B2C SaaS platforms. Specialising in design systems, information architecture, and design team leadership. Currently at Toyota Connected India. Open to global remote roles including Lead UX Designer, UX Design Manager, Design Director, UX Architect, and VP of UX.</p>
+
+        <section>
+          <h2>Selected Works</h2>
+          <article>
+            <h3>INFLEET — Fleet Management Design System</h3>
+            <p>Delivered Toyota B2B fleet management SaaS platform from 0 to production. Created 40+ component design system with WCAG AA accessibility standards across web, tablet, and mobile.</p>
+          </article>
+          <article>
+            <h3>Toyota i-Connect &amp; Lexus — Connected Driving Experience</h3>
+            <p>Drove 60% increase in product engagement by redesigning remote vehicle control, service booking, and vehicle health monitoring flows for B2C automotive SaaS.</p>
+          </article>
+          <article>
+            <h3>Wallstreet English — Global Learning Platform</h3>
+            <p>Increased course completion rates by 36% by redesigning the core digital classroom experience across 20 countries and multiple languages.</p>
+          </article>
+          <article>
+            <h3>Android &amp; iOS Smartwatch — i-Connect</h3>
+            <p>End-to-end UX design for wearable integration with connected vehicle features for Toyota i-Connect.</p>
+          </article>
+          <article>
+            <h3>HCI AI System Design — Fall Detection</h3>
+            <p>Human-Computer Interaction design for AI-driven fall detection and health monitoring system. Cambridge University HCI certification applied.</p>
+          </article>
+        </section>
+
+        <section>
+          <h2>About Ramkumar Ganesh — Senior Product Designer</h2>
+          <p>Senior Product Designer and Design Lead with expertise in: Product and UX Leadership, End-to-End Product Design from Discovery to Delivery, SaaS and Platform UX, Design Systems and Accessibility, Information Architecture, Service Design, User Research and Validation, Data-Driven UX and OKRs, and Design Mentorship and Hiring.</p>
+          <p>Tools: Figma, Sketch, Adobe XD, Adobe Creative Suite, Confluence, Miro, Maze, Firebase, Usertesting.com. AI-assisted tools: Claude Code, Emergent, Storybook, Replit, Cursor.</p>
+          <p>Available for Lead UX Designer, UX Design Architect, UX Design Manager, Design Director, and VP of UX roles. Open to global remote positions in B2B SaaS, FinTech, HealthTech, EdTech, Automotive, and Enterprise platforms.</p>
+        </section>
+
+        <section>
+          <h2>UX Design Process</h2>
+          <ol>
+            <li><h3>Strategizing</h3><p>Laying the foundation for success through stakeholder research, user interviews, and UX strategy definition.</p></li>
+            <li><h3>Discovery</h3><p>Transforming concepts into validated prototypes through information architecture, user flows, and interaction design.</p></li>
+            <li><h3>Creation</h3><p>Orchestrating seamless collaboration between design, product management, and frontend engineering teams.</p></li>
+            <li><h3>Optimizing</h3><p>Refining through rigorous usability testing, A/B experimentation, analytics review, and iterative improvement.</p></li>
+          </ol>
+        </section>
+
+        <footer>
+          <h2>Contact Ramkumar Ganesh</h2>
+          <address>
+            <p>Email: ramkumargd01@gmail.com</p>
+            <p>LinkedIn: linkedin.com/in/ramkumarux</p>
+            <p>Location: India — open to global remote</p>
+          </address>
+        </footer>
+      </div>
+
       {!loaderComplete && (
         <Loader
           sceneReady={orchestratorReady}

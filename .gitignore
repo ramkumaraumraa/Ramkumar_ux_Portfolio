@@ -2,6 +2,7 @@ node_modules
 
 # Ignore build and tool cache
 .next/
+out/
 .claude/
 
 # macOS and editor artifacts
