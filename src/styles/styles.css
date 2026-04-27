@@ -9,11 +9,6 @@ section {
     overflow: visible; /* Ensure no section clips the twinkles */
   }
 
-@keyframes pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -30,15 +25,6 @@ section {
   }
 }
 
-.section-loader {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: rgba(255, 255, 255, 0.5);
-  z-index: 1;
-}
-
 body {
   margin: 0;
   padding: 0;
@@ -53,116 +39,10 @@ body {
 /* Section transitions */
 section {
   will-change: opacity, transform;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  /* Transitions removed to allow pure high-performance GSAP control */
 }
 
-/* Scroll locked state */
-body.scroll-locked {
-  overflow: hidden !important;
-  position: fixed !important;
-  width: 100% !important;
-}
 
-/* Hide scrollbar during locks */
-.scroll-locked::-webkit-scrollbar {
-  display: none;
-}
-
-.parallax-debug-panel {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  background: rgba(0,0,0,0.85);
-  color: white;
-  padding: 14px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-family: monospace;
-  z-index: 10000;
-  max-width: 320px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 255, 255, 0.2);
-}
-
-.debug-header {
-  margin-bottom: 8px;
-}
-
-.debug-phase {
-  margin-bottom: 6px;
-  padding: 4px;
-  background: rgba(0,255,0,0.2);
-  border-radius: 4px;
-}
-
-.debug-phase.locked {
-  background: rgba(255,0,0,0.2);
-}
-
-.debug-info, .debug-stats {
-  margin-top: 6px;
-}
-
-.debug-scroll {
-  margin-top: 6px;
-  padding: 4px;
-  background: rgba(0,100,255,0.2);
-  border-radius: 4px;
-}
-
-.lock-indicator {
-  position: fixed;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 60px;
-  background: linear-gradient(180deg, 
-    transparent, 
-    rgba(255, 100, 100, 0.6), 
-    rgba(255, 100, 100, 0.6),
-    transparent);
-  border-radius: 2px;
-  z-index: 9998;
-  pointer-events: none;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.reveal-progress {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px;
-  height: 2px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 1px;
-  z-index: 9997;
-  pointer-events: none;
-}
-
-.reveal-progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #00ffff, #00a2ff);
-  border-radius: 1px;
-  transition: width 0.3s ease-out;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
-
-.section-loader {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: rgba(255, 255, 255, 0.5);
-  font-family: 'Nunito', sans-serif;
-  font-size: 14px;
-  z-index: 1;
-}
 
 /* Responsive section transitions */
 @media (max-width: 768px) {
@@ -205,35 +85,7 @@ body.scroll-locked {
   z-index: 2;
 }
 
-/* RGB Glow Layers for Chromatic Aberration */
-.glow {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  line-height: 1.1;
-  letter-spacing: 0.06em;
-  pointer-events: none;
-  user-select: none;
-  mix-blend-mode: screen;
-  opacity: 0.08;
-  transform: translateZ(0);
-  white-space: pre-wrap;
-  text-transform: capitalize;
-  font-size: inherit;
-  font-weight: inherit;
-  z-index: -1;
-}
 
-.glow--red { 
-  color: rgba(255, 40, 70, 0.9); 
-  filter: blur(3px) saturate(1.2); 
-}
-
-.glow--cyan { 
-  color: rgba(80, 255, 255, 0.9); 
-  filter: blur(3px) saturate(1.2); 
-}
 
 /* Text Line Container */
 .line { 
@@ -299,17 +151,14 @@ body.scroll-locked {
   .line { margin: 0.15em 0; }
   .hero-block {
     filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
-    padding: 0 16px; /* Additional inner padding */
-  }
-  .glow {
-    opacity: 0.05; /* Reduce glow on mobile for performance */
+    padding: 0 16px;
   }
 }
 
 @media (max-width: 480px) {
   .line { margin: 0.1em 0; }
   .cinematic-hero::after {
-    animation-duration: 15s; /* Slower grain on mobile */
+    animation-duration: 15s;
     opacity: 0.2;
   }
 }
@@ -322,15 +171,9 @@ body.scroll-locked {
   .cinematic-hero::after {
     animation: none;
   }
-  .glow {
-    opacity: 0.03;
-  }
 }
 
 @media (prefers-contrast: high) {
-  .glow {
-    display: none;
-  }
   .cinematic-hero::after {
     display: none;
   }
@@ -584,7 +427,6 @@ body.scroll-locked {
     align-items: center;
     background: linear-gradient(90deg, rgba(23, 14, 42, 0.5), rgba(0, 26, 43, 0.5));
     color: white;
-    text-transform: uppercase;
     text-decoration: none;
     overflow: hidden;
     transition: background-color 0.3s ease, transform 0.75s ease;
@@ -787,8 +629,8 @@ body.scroll-locked {
   align-items: stretch;
   width: 100%;
   max-width: 100%;
-  height: 100%;
-  min-height: 100%;
+  height: auto;
+  min-height: auto;
   padding: clamp(8px, 1vw, 16px) var(--section-side-gutter);
   gap: clamp(1rem, 2vw, 1.75rem);
   margin: 0;
@@ -808,7 +650,7 @@ body.scroll-locked {
   flex: 0 0 min(31vw, 420px);
   min-width: 360px;
   min-height: 0;
-  height: 100%;
+  height: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -835,13 +677,16 @@ body.scroll-locked {
   background: transparent;
   border: none;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-image-container {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .profile-image {
@@ -876,7 +721,7 @@ body.scroll-locked {
 
 .about-right {
   min-height: 0;
-  height: 100%;
+  height: auto;
   flex: 1;
   color: #fff;
   display: flex;
@@ -1061,25 +906,25 @@ body.scroll-locked {
 
 .expertise-tooltip {
   position: fixed;
-  width: 320px;
+  width: 300px;
   max-width: 90vw;
   background: linear-gradient(135deg, 
-    rgba(0, 14, 35, 0.95),
-    rgba(24, 31, 38, 0.95)
+    rgba(0, 14, 35, 0.97),
+    rgba(24, 31, 38, 0.97)
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 16px 20px;
-  border-radius: 12px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 14px 18px;
+  border-radius: 10px;
   color: #fff;
   pointer-events: none;
   z-index: 10000;
   border: 1px solid rgba(0, 255, 255, 0.2);
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(0, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform-origin: center;
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(0, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform-origin: top left;
 }
 
 .expertise-tooltip::before {
@@ -1275,9 +1120,15 @@ body.scroll-locked {
   }
 
   .about-left {
+    flex: none;        /* kill the column-direction flex-basis that was capping card height to ~120px */
+    min-width: 0;      /* remove 360px min-width that overflows narrow phones */
     width: 100%;
-    padding: 14px 14px 84px;
+    padding: 0 0 88px; /* no side padding so image fills card edge-to-edge; bottom for abs button */
     margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
   }
 
   .about-right {
@@ -1290,7 +1141,30 @@ body.scroll-locked {
   }
 
   .profile-visual {
-    min-height: clamp(340px, 56vh, 520px);
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    flex: none;
+  }
+
+  /* Override desktop height:100% fills — let image drive container size on mobile */
+  .profile-image-container {
+    height: auto;
+    flex: none;
+  }
+
+  .profile-image {
+    width: 100%;
+    height: auto;
+  }
+
+  .about-left .card-button {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    width: 100%;
+    max-width: none;
   }
 
   .about-header {
@@ -1456,8 +1330,8 @@ body.scroll-locked {
 .process-section {
   width: 100%;
   max-width: 100%;
-  min-height: 100%;
-  height: 100%;
+  height: calc(100vh - var(--section-shell-top-pad) - var(--section-shell-bottom-pad));
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1470,166 +1344,161 @@ body.scroll-locked {
   overflow: hidden;
 }
 
-/* ─── Arc container ─────────────────────────────────────── */
-.process-arc-container {
+/* ─── Holographic Data Grid ───────────────────────────────── */
+.holographic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(1.25rem, 2.5vw, 2.5rem);
+  width: 100%;
+  max-width: min(1600px, calc(100% - 0px));
+  position: relative;
+  z-index: 105;
+  align-items: stretch;
+  align-content: center;
+}
+
+/* ── About-panel style glass ──────────────────────────────── */
+.holo-card {
+  position: relative;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top, rgba(0, 196, 255, 0.07), transparent 55%),
+    linear-gradient(180deg, rgba(8, 20, 35, 0.72), rgba(18, 9, 35, 0.62));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(160, 216, 255, 0.13);
+  box-shadow:
+    0 20px 48px rgba(2, 6, 23, 0.32),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.4s ease;
+}
+
+.holo-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(160, 216, 255, 0.28);
+  box-shadow:
+    0 28px 60px rgba(2, 6, 23, 0.48),
+    0 0 28px rgba(0, 196, 255, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
+}
+
+/* Large Illustration Area */
+.holo-illustration {
   position: relative;
   width: 100%;
-  height: 520px;
+  height: clamp(210px, 30vh, 310px);
+  flex-shrink: 0;
   overflow: visible;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 32px 24px 12px;
+  box-sizing: border-box;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Cards are placed absolutely by GSAP — only width set here */
-.process-arc-card {
+/* Illustration micro-animation on card hover */
+.holo-card:hover .holo-illustration {
+  transform: scale(1.08) rotate(-1deg);
+}
+
+/* Thin divider line beneath illustration */
+.holo-illustration::after {
+  content: '';
   position: absolute;
-  width: 280px;
-  will-change: transform, opacity;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(160, 216, 255, 0.18),
+    transparent
+  );
 }
 
-/* Title + subtitle grouped for parallax targeting */
-.process-card-title-group {
+/* Card Text Content — left-aligned */
+.holo-content {
+  padding: 16px 20px 22px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 8px;
+  text-align: left;
+  flex: 1; /* fill remaining card height */
 }
 
-/* Description: GSAP controls height (0 → auto) */
-.process-desc-wrap {
-  overflow: hidden;
+.holo-content .body-title-3 {
+  text-align: left !important;
+  margin: 0 !important;
 }
 
-/* ─── Step indicator dots ───────────────────────────────── */
-.process-step-indicators {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 28px;
+.holo-content .body-2 {
+  text-align: left !important;
+  margin: 5px 0 0 !important;
+  opacity: 0.8;
 }
 
-.process-step-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.2);
-  /* GSAP morphs width + background-color on active */
-}
-
-/* =========================================
-   CARD (single definition)
-   ========================================= */
-
-.process-card {
-  --stroke: 0.6px;                          /* gradient border thickness */
-  --fill: rgba(0, 14, 35, 0.06);          /* faint fill for readability */
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-  padding:12px;
-  background: var(--fill);                /* low opacity background */
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 0.6px solid transparent;          /* for ring layout consistency */
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
-  min-height: 480px;
-  cursor: default;
-}
-
-/* Gradient stroke drawn via masked ring (keeps radius + vivid color) */
-.process-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  padding: var(--stroke);
-  border-radius: inherit;
-  pointer-events: none;
-  background: var(--border-gradient, linear-gradient(135deg, #6B46C1, #FF1493));
-  /* keep only the ring */
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-          mask-composite: exclude;
-}
-
-/* Pick gradient per card (reuses your original palette) */
-.process-card-1 { --border-gradient: linear-gradient(135deg, #6B46C1, #FF1493); }
-.process-card-2 { --border-gradient: linear-gradient(135deg, #FF1493, #FFD700); }
-.process-card-3 { --border-gradient: linear-gradient(135deg, #FFD700, #00FF00); }
-.process-card-4 { --border-gradient: linear-gradient(135deg, #00FF00, #00BFFF); }
-
-/* =========================================
-   SVG STACK
-   ========================================= */
-
-.process-svg-wrap {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  margin-bottom: 20px;
-  overflow: hidden;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.01);
-}
-
-.process-card-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 10px;
-  will-change: opacity;
-  transition: opacity 1.5s ease-in-out;
-}
-
-/* =========================================
-   CONTENT
-   ========================================= */
-
-.process-card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+.holo-content .footnote {
+  text-align: left !important;
+  margin: 10px 0 0 !important;
+  line-height: var(--line-height-relaxed);
+  color: rgba(208, 221, 232, 0.82);
 }
 
 /* =========================================
    RESPONSIVE
    ========================================= */
 
-/* Tablet: narrower cards */
-@media (max-width: 1024px) {
-  .process-arc-container {
-    height: 480px;
-  }
-  .process-arc-card {
-    width: 240px;
+@media (max-width: 1100px) {
+  .holographic-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    max-width: 680px;
   }
 
-  .process-card {
-    max-width: 360px;
+  .holo-illustration {
+    height: clamp(170px, 24vh, 230px);
   }
 }
 
-/* Mobile: single-card centered, clip overflow */
-@media (max-width: 768px) {
-  .process-arc-container {
-    height: 460px;
-    overflow: hidden;
+@media (max-width: 700px) {
+  .holographic-grid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+    max-width: 420px;
+    padding-bottom: 1.5rem;
   }
-  .process-arc-card {
-    width: min(90vw, 340px);
+
+  .holo-illustration {
+    height: clamp(150px, 22vh, 200px);
+    padding: 20px 20px 10px;
+  }
+}
+
+/* Mobile Screens - Process Section Overrides */
+@media screen and (max-width: 768px) {
+  .process-section {
+    height: auto;
+    min-height: auto;
+    overflow-y: visible;
+    justify-content: flex-start;
+    padding-top: 16px;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+  
+  .holographic-grid {
+    align-content: flex-start;
+    justify-content: start;
+    padding-top: 0;
   }
 }
   
@@ -1672,9 +1541,9 @@ body.scroll-locked {
 
 .footer-testimonial-plane {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.12fr) minmax(0, 0.92fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(14px, 2vw, 24px);
-  align-items: end;
+  align-items: stretch;
   perspective: 1400px;
   transform-style: preserve-3d;
   max-width: none;
@@ -1682,6 +1551,7 @@ body.scroll-locked {
 }
 
 .testimonial-card {
+  height: 100%;
   min-height: clamp(212px, 28vh, 272px);
   padding: clamp(18px, 2vw, 24px);
   margin: 0;
@@ -1705,7 +1575,6 @@ body.scroll-locked {
 }
 
 .testimonial-card--featured {
-  min-height: clamp(236px, 31vh, 292px);
   border-color: rgba(118, 232, 255, 0.24);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.025)),
@@ -1717,17 +1586,17 @@ body.scroll-locked {
 }
 
 .testimonial-card--left {
-  opacity: 0.82;
-  transform: translateY(18px) rotateY(6deg) rotateX(2deg) translateZ(-20px);
+  opacity: 0.88;
+  transform: rotateY(4deg) rotateX(1deg) translateZ(-12px);
 }
 
 .testimonial-card--featured {
-  transform: translateY(-6px) translateZ(24px);
+  transform: translateZ(16px);
 }
 
 .testimonial-card--right {
-  opacity: 0.82;
-  transform: translateY(18px) rotateY(-6deg) rotateX(2deg) translateZ(-20px);
+  opacity: 0.88;
+  transform: rotateY(-4deg) rotateX(1deg) translateZ(-12px);
 }
 
 .testimonial-card:hover {
@@ -2054,7 +1923,7 @@ body.scroll-locked {
   }
 
   .testimonial-card--featured {
-    min-height: 200px;
+    min-height: 184px;
   }
 
   .testimonial-quote {
@@ -2329,10 +2198,12 @@ body.scroll-locked {
    FAB (Floating Action Button) — Socials
    ========================================= */
 .mobile-fab-container {
-  position: fixed;
-  bottom: 92px;
-  right: 16px;
-  z-index: 9998;
+  position: fixed !important;
+  top: auto !important;
+  bottom: 92px !important; /* reliable standard fallback */
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px) + 16px) !important;
+  right: 16px !important;
+  z-index: 9998 !important;
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
@@ -2382,12 +2253,12 @@ body.scroll-locked {
 
 .fab-menu-items {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: center;
   gap: 10px;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(16px) scale(0.9);
+  transform: translateY(10px) scale(0.9);
   transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -2466,7 +2337,7 @@ body.scroll-locked {
 .hero-block {
   transform-style: preserve-3d;
   will-change: transform, opacity;
-  pointer-events: none;
+  pointer-events: auto;
   text-align: center;
 }
 
@@ -2501,4 +2372,33 @@ body.scroll-locked {
 
 .testimonial-card-3d:hover {
   transform: translateZ(50px) rotateY(5deg);
+}
+
+/* ── Works Section Mobile Overrides ──────────────────────────── */
+@media screen and (max-width: 768px) {
+  .works-section-mobile {
+    height: auto !important;
+    min-height: 100vh;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
+    padding-top: max(env(safe-area-inset-top, 0px), 32px);
+    pointer-events: auto !important;
+  }
+  
+  .works-container {
+    flex-direction: column !important;
+    gap: 32px;
+    padding-top: 5vh;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px) + 32px) !important;
+    align-items: center;
+    height: auto !important;
+  }
+  
+  .works-container > .group:nth-child(odd) {
+    transform: translateX(-4%);
+  }
+  
+  .works-container > .group:nth-child(even) {
+    transform: translateX(4%);
+  }
 }

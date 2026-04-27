@@ -88,13 +88,13 @@ export default function SectionChrome({ activeSection }: SectionChromeProps) {
 
         <div className="section-chrome__title-wrap">
           {entry.title ? (
-            <p className="section-chrome__title">
+            <h5 className="section-chrome__title">
               {titleChars.map((char, index) => (
                 <span key={`${char}-${index}`} className="section-chrome__char">
                   {char === " " ? "\u00A0" : char}
                 </span>
               ))}
-            </p>
+            </h5>
           ) : (
             <div className="section-chrome__placeholder" aria-hidden="true" />
           )}

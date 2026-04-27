@@ -8,6 +8,7 @@ import { gsap } from 'gsap';
 const About = () => {
   const aboutRef = useRef<HTMLElement>(null);
   const gsapContextRef = useRef<gsap.Context | null>(null);
+  const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const [hoveredExpertise, setHoveredExpertise] = useState<number | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipPlacement, setTooltipPlacement] = useState("right");
@@ -16,19 +17,19 @@ const About = () => {
 
   const expertiseData = [
     {
-      title: "Design Workshops & Mentorship",
+      title: "Design workshops & mentorship",
       description: "Conduct interactive workshops or training sessions to educate teams and aspiring designers on UX best practices, methodologies, and strategies."
     },
     {
-      title: "Branding, Design Systems, & Audits",
+      title: "Branding, design systems & audits",
       description: "I develop scalable design systems and libraries that ensure consistent, efficient product development and brand alignment, while conducting in-depth UX audits to enhance usability, accessibility, and overall user satisfaction across websites, mobile apps, and digital platforms."
     },
     {
-      title: "Websites, & Mobile Apps",
+      title: "Websites & mobile apps",
       description: "Create responsive, high-performing websites and landing pages designed to captivate users, generate leads, and drive conversions."
     },
     {
-      title: "IoT, Mobility, SaaS, & AI Products",
+      title: "IoT, mobility, SaaS & AI products",
       description: "I design intuitive mobility smart systems and digital products that align user needs with business goals, while leveraging human-centered AI principles to craft conversational UIs, ethical systems, and inclusive experiences."
     },
   ];
@@ -48,67 +49,64 @@ const About = () => {
 
     gsapContextRef.current = gsap.context(() => {
       const tl = gsap.timeline({ paused: true });
+      timelineRef.current = tl;
 
-      // Build the reveal timeline
-      tl.fromTo('.about-left', { scale: 0.95, opacity: 0, x: -24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
-      tl.fromTo('.about-right', { scale: 0.95, opacity: 0, x: 24 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 1 }, 0);
-      tl.fromTo('.stat-item', { scale: 0.8, opacity: 0, y: 20 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.8, stagger: 0.1 }, 0.2);
+      // Phase 1: Enter & Dock (0.0 to 0.5)
+      // Elements come from deep distance (scale 0.1) and settle at center (scale 1)
+      tl.fromTo('.about-left', { scale: 0.1, opacity: 0, x: -100 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 0.5 }, 0);
+      tl.fromTo('.about-right', { scale: 0.1, opacity: 0, x: 100 }, { scale: 1, opacity: 1, x: 0, ease: 'power2.out', duration: 0.5 }, 0);
+      tl.fromTo('.stat-item', { scale: 0.5, opacity: 0, y: 50 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.4, stagger: 0.05 }, 0.1);
       
       const targetClass = isDesktop ? '.expertise-item' : '.expertise-accordion-item';
       if (document.querySelectorAll(targetClass).length > 0) {
-        tl.fromTo(targetClass, { scale: 0.9, opacity: 0, y: 16 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.6, stagger: 0.05 }, 0.4);
+        tl.fromTo(targetClass, { scale: 0.5, opacity: 0, y: 30 }, { scale: 1, opacity: 1, y: 0, ease: 'power2.out', duration: 0.3, stagger: 0.03 }, 0.2);
       }
+
+      // Phase 2: Zoom Past Camera (0.5 to 1.0)
+      // Elements scale up massively and fade out as if the camera passed through them
+      tl.to('.about-left', { scale: 4, x: -300, rotateY: -30, duration: 0.5, ease: 'power2.in' }, 0.5);
+      tl.to('.about-right', { scale: 4, x: 300, rotateY: 30, duration: 0.5, ease: 'power2.in' }, 0.5);
+      tl.to('.about-header', { scale: 5, z: 300, duration: 0.5, ease: 'power2.in' }, 0.52);
+
+      // Fast fade out
+      tl.to(['.about-left', '.about-right', '.about-header'], { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.5);
 
       // Sync timeline with scroll progress
       tl.progress(localProgress);
     }, aboutRef);
 
     return () => {
-      if (gsapContextRef.current) {
-        gsapContextRef.current.revert();
-      }
+      if (gsapContextRef.current) gsapContextRef.current.revert();
+      timelineRef.current = null;
     };
-  }, [isDesktop, localProgress]);
+  }, [isDesktop]);
+
+  useEffect(() => {
+    if (timelineRef.current) {
+      timelineRef.current.progress(localProgress);
+    }
+  }, [localProgress]);
 
   const handleStatMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.killTweensOf(e.currentTarget);
     gsap.to(e.currentTarget, { scale: 1.05, duration: 0.3, ease: 'back.out(2)' });
   };
   const handleStatMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.killTweensOf(e.currentTarget);
     gsap.to(e.currentTarget, { scale: 1, duration: 0.3, ease: 'power2.out' });
   };
 
   const handleExpertiseMouseMove = (e: React.MouseEvent) => {
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    const offsetX = 15;
-    const offsetY = 10;
-    const tooltipWidth = 320;
-    const tooltipHeight = 100;
-
-    let placement = "right";
-    let x = e.clientX + offsetX;
-    let y = e.clientY + offsetY;
-
-    if (x + tooltipWidth > viewportWidth - 20) {
-      placement = "left";
-      x = e.clientX - tooltipWidth - offsetX;
+    const tooltipWidth = 300;
+    // Stay close to cursor — 18px offset to the right, slightly up
+    let x = e.clientX + 18;
+    const y = e.clientY - 10;
+    // Flip to left if too close to right edge
+    if (x + tooltipWidth > viewportWidth - 16) {
+      x = e.clientX - tooltipWidth - 18;
     }
-
-    if (y + tooltipHeight > viewportHeight - 20) {
-      y = e.clientY - tooltipHeight - offsetY;
-    }
-
-    if (x < 20) {
-      x = 20;
-      placement = "right";
-    }
-
-    if (y < 20) {
-      y = 20;
-    }
-
-    setTooltipPlacement(placement);
+    setTooltipPlacement(x < e.clientX ? "left" : "right");
     setTooltipPosition({ x, y });
   };
 
@@ -117,25 +115,29 @@ const About = () => {
     setHoveredExpertise(index);
     handleExpertiseMouseMove(e);
 
-    const tooltip = document.querySelector(".expertise-tooltip");
-    if (tooltip) {
-      gsap.fromTo(
-        tooltip,
-        { opacity: 0, scale: 0.8 },
-        { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" }
-      );
-    }
+    setTimeout(() => {
+      const tooltip = document.querySelector(".expertise-tooltip");
+      if (tooltip) {
+        gsap.killTweensOf(tooltip);
+        gsap.fromTo(
+          tooltip,
+          { opacity: 0, scale: 0.8 },
+          { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" }
+        );
+      }
+    }, 0);
   };
 
   const handleExpertiseMouseLeave = () => {
     if (!isDesktop) return;
     const tooltip = document.querySelector(".expertise-tooltip");
     if (tooltip) {
+      gsap.killTweensOf(tooltip);
       gsap.to(tooltip, {
         opacity: 0,
         scale: 0.8,
-        duration: 0.3,
-        ease: "power3.out",
+        duration: 0.2, // slightly faster exit
+        ease: "power2.in",
         onComplete: () => setHoveredExpertise(null)
       });
     } else {
@@ -148,17 +150,19 @@ const About = () => {
   };
 
   return (
-    <section ref={aboutRef} id="about" className="about-expertise-section">
+    <div className="about-wrapper" style={{ minHeight: '100%', display: 'flex', alignItems: 'center', width: '100%' }}>
+      <section ref={aboutRef} id="about" className="about-expertise-section">
       <div className="about-left">
         <div className="profile-visual">
-          <div className="profile-image-container">
+          <div className="profile-image-container" style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
             <Image
               src="/assets/imgs/About/My Pic 1.png"
               alt="Ramkumar - Senior Product Designer and UX Mentor"
-              fill
+              width={800}
+              height={800}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 42vw, 32vw"
               quality={90}
-              style={{ objectFit: 'contain', objectPosition: 'center top' }}
+              style={{ width: '100%', height: 'auto', objectFit: 'contain', objectPosition: 'center top' }}
               className="profile-image"
               priority
             />
@@ -171,7 +175,7 @@ const About = () => {
           rel="noopener noreferrer"
           aria-label="Download Ramkumar's Resume PDF"
         >
-          Download Resume
+          Download resume
           <span></span>
           <span></span>
           <span></span>
@@ -198,8 +202,8 @@ const About = () => {
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
           >
-            <h5 className="pink h5 neon">25+</h5>
-            <p className="caption-text-label">PRODUCTS DESIGNED</p>
+            <h5>25+</h5>
+            <p className="caption-text-label">Products designed</p>
           </div>
 
           <div
@@ -207,8 +211,8 @@ const About = () => {
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
           >
-            <h5 className="pink h5 neon">100+</h5>
-            <p className="caption-text-label">FEATURES DEVELOPED</p>
+            <h5>100+</h5>
+            <p className="caption-text-label">Features developed</p>
           </div>
 
           <div
@@ -216,8 +220,8 @@ const About = () => {
             onMouseEnter={handleStatMouseEnter}
             onMouseLeave={handleStatMouseLeave}
           >
-            <h5 className="pink h5 neon">500+</h5>
-            <p className="caption-text-label">RESEARCH ORCHESTRATED</p>
+            <h5>500+</h5>
+            <p className="caption-text-label">Research orchestrated</p>
           </div>
         </div>
 
@@ -288,6 +292,7 @@ const About = () => {
         </div>
       )}
     </section>
+    </div>
   );
 };
 

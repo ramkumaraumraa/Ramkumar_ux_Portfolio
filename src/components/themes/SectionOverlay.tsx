@@ -20,7 +20,7 @@ export default function SectionOverlay({ activeSection }: SectionOverlayProps) {
   return (
     <div className={`section-overlay${visible ? ' section-overlay--visible' : ''}${footerClass}`}>
       <Suspense fallback={null}>
-        {activeSection === 'home'    && <HomeSection />}
+        <HomeSection activeSection={activeSection} />
         {activeSection === 'works'   && <WorksSection />}
         {activeSection === 'about'   && <AboutSection />}
         {activeSection === 'process' && <ProcessSection />}

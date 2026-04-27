@@ -1,134 +1,231 @@
-
-
-
 .loader {
+  --loader-accent: #73d8ff;
+  --loader-bg-top: rgba(7, 18, 34, 0.94);
+  --loader-bg-bottom: rgba(2, 8, 18, 0.98);
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(135deg, #0d253f, #020c1b);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
   z-index: 9999;
-  transition: opacity 0.8s ease;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(115, 216, 255, 0.1), transparent 36%),
+    radial-gradient(circle at 50% 52%, rgba(115, 216, 255, 0.06), transparent 55%),
+    linear-gradient(180deg, var(--loader-bg-top), var(--loader-bg-bottom));
+}
+
+.loader::before,
+.loader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.loader::before {
+  background:
+    linear-gradient(90deg, transparent 49.8%, rgba(115, 216, 255, 0.2) 50%, transparent 50.2%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05), transparent 62%);
+  mix-blend-mode: screen;
+  opacity: 0.8;
+}
+
+.loader::after {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 22%, transparent 78%, rgba(255, 255, 255, 0.03)),
+    radial-gradient(circle at center, transparent 48%, rgba(0, 0, 0, 0.28) 100%);
+}
+
+.loader-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(8, 18, 34, 0.88), rgba(4, 10, 22, 0.96)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  will-change: transform;
+}
+
+.loader-panel--left {
+  left: 0;
+  border-right: 1px solid rgba(115, 216, 255, 0.08);
+}
+
+.loader-panel--right {
+  right: 0;
+  border-left: 1px solid rgba(115, 216, 255, 0.08);
+}
+
+.loader-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle at center, rgba(169, 235, 255, 0.5), transparent 22%),
+    radial-gradient(circle at center, rgba(169, 235, 255, 0.16), transparent 46%);
+  mix-blend-mode: screen;
 }
 
 .loader-content {
   position: relative;
+  z-index: 4;
+  width: min(640px, calc(100vw - 48px));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 40px;
-}
-
-.progress-container {
-  position: relative;
-  width: 280px;
-  height: 280px;
-}
-
-.progress-ring {
-  transform: rotate(-90deg);
-}
-
-.progress-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  gap: 20px;
   text-align: center;
+  will-change: transform, opacity;
 }
 
-.progress-number {
-  font-weight: bold;
+.loader-phase {
   margin: 0;
-  background: linear-gradient(90deg, #00ffff, #00a2ff);
+  color: rgba(230, 245, 255, 0.62);
+  font-size: clamp(12px, 0.95vw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.loader-progress-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loader-progress-number {
+  margin: 0;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0.06em;
+  font-size: clamp(84px, 11vw, 156px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.08em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 34px rgba(83, 189, 255, 0.18);
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.loader-progress-value,
+.loader-progress-percent {
+  display: inline-block;
+  line-height: 1.1;
+  background: linear-gradient(180deg, #c9f4ff 0%, #79dfff 55%, #53bdff 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
+  padding: 0.1em 0.15em;
+  margin: -0.1em -0.15em;
 }
 
-.progress-label {
-  margin-top: 8px;
-  opacity: 0.7;
-  font-size: 14px;
+.loader-progress-percent {
+  position: static;
+  font-size: 0.42em;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.12em;
 }
 
-.welcome-section {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.welcome-title {
-  margin-bottom: 12px;
-}
-
-.welcome-subtitle {
-  margin: 0;
-}
-
-.enter-button {
+.loader-progress-shell {
   position: relative;
-  padding: 16px 32px;
-  background: linear-gradient(135deg, 
-    rgba(0, 255, 255, 0.1),
-    rgba(183, 0, 255, 0.1)
-  );
-  border: 2px solid transparent;
-  border-radius: 50px;
-  color: white;
-  font-size: 18px;
-  font-weight: 500;
-  cursor: none;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  width: min(220px, 52vw);
+  height: 24px;
+}
+
+.loader-progress-rail,
+.loader-progress-seam,
+.loader-progress-half {
+  position: absolute;
+  top: 50%;
+}
+
+.loader-progress-rail {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.loader-progress-seam {
+  left: 50%;
+  width: 1px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, transparent, rgba(115, 216, 255, 0.95), transparent);
+  box-shadow: 0 0 14px rgba(115, 216, 255, 0.4);
+  animation: loaderBreath 3.2s ease-in-out infinite;
+}
+
+.loader-progress-half {
+  width: 50%;
+  height: 3px;
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(115, 216, 255, 0.32);
+  will-change: transform;
+}
+
+.loader-progress-half--left {
+  right: 50%;
+  background: linear-gradient(90deg, rgba(115, 216, 255, 0), rgba(115, 216, 255, 0.95));
+  transform-origin: right center;
+}
+
+.loader-progress-half--right {
+  left: 50%;
+  background: linear-gradient(90deg, rgba(115, 216, 255, 0.95), rgba(115, 216, 255, 0));
+  transform-origin: left center;
+}
+
+.loader-title-group {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(620px, 100%);
 }
 
-.enter-button::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  background: linear-gradient(90deg, #00ffff, #00a2ff, #b700ff);
-  border-radius: 50px;
-  z-index: -1;
-  opacity: 0.5;
-  animation: rotate 3s linear infinite;
+.loader-title,
+.loader-subtitle {
+  margin: 0;
+  text-wrap: balance;
 }
 
-.enter-button::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #0d253f, #020c1b);
-  border-radius: 48px;
-  z-index: -1;
+.loader-title {
+  color: rgba(247, 251, 255, 0.96);
+  font-size: clamp(34px, 3.9vw, 60px);
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  word-spacing: 0.06em;
+  line-height: 1.02;
 }
 
-.enter-text, .enter-arrow {
-  position: relative;
-  z-index: 1;
+.loader-subtitle {
+  color: rgba(226, 241, 250, 0.72);
+  font-size: clamp(18px, 1.7vw, 26px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
-.enter-arrow {
-  font-size: 24px;
-  transition: transform 0.3s ease;
-}
-
-.enter-button:hover .enter-arrow {
-  transform: translateX(5px);
-}
-
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes loaderBreath {
+  0%, 100% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scaleY(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scaleY(1.05);
+  }
 }
 
 /* Cursor particles on loader */
@@ -138,25 +235,37 @@
 }
 
 @media (max-width: 768px) {
-  .progress-container {
-    width: 220px;
-    height: 220px;
+  .loader-content {
+    width: min(460px, calc(100vw - 32px));
+    gap: 18px;
   }
 
-  .progress-ring {
-    width: 220px;
-    height: 220px;
+  .loader-progress-group {
+    gap: 12px;
   }
 
-  .progress-ring circle {
-    r: 90;
-    cx: 110;
-    cy: 110;
+  .loader-progress-number {
+    font-size: clamp(78px, 22vw, 118px);
   }
 
-  .enter-button {
-    padding: 12px 24px;
-    font-size: 16px;
+  .loader-progress-shell {
+    width: min(180px, 56vw);
+  }
+
+  .loader-title {
+    font-size: clamp(28px, 8vw, 42px);
+    letter-spacing: -0.012em;
+    word-spacing: 0.05em;
+  }
+
+  .loader-subtitle {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-progress-seam {
+    animation: none;
   }
 }
 
@@ -439,8 +548,8 @@ html.lenis, html.lenis body {
 }
 
 .button-text {
-  font-family: 'Nunito', sans-serif;
-  font-size: 16px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: var(--font-size-body-2);
   font-weight: 500;
   color: white;
   letter-spacing: 0.5px;
@@ -977,18 +1086,15 @@ html.lenis, html.lenis body {
 .section-chrome__title {
   margin: 0;
   color: var(--section-chrome-title);
-  font-family: 'Lexend Deca', sans-serif;
+  font-family: 'Clash Display', 'Arial Black', sans-serif;
   font-size: clamp(1.08rem, 1.25vw + 0.64rem, 1.48rem);
   line-height: 1.1;
-  letter-spacing: 0.015em;
+  letter-spacing: 0.04em;
   font-weight: 600;
   text-align: center;
+  text-shadow: none;
   position: relative;
   z-index: 1;
-  text-shadow:
-    0 0 6px var(--section-chrome-glow),
-    0 0 18px var(--section-chrome-glow),
-    0 0 36px color-mix(in srgb, var(--section-chrome-glow) 55%, transparent);
 }
 
 .section-chrome__char {
@@ -1042,11 +1148,11 @@ html.lenis, html.lenis body {
   padding: 8px;
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 18%, rgba(10, 18, 32, 0.58) 18%, rgba(6, 12, 24, 0.46) 100%),
-    linear-gradient(135deg, rgba(0, 255, 255, 0.035), rgba(183, 0, 255, 0.025)),
-    rgba(6, 12, 24, 0.34);
-  backdrop-filter: blur(30px) saturate(145%);
-  -webkit-backdrop-filter: blur(30px) saturate(145%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.04) 18%, rgba(6, 12, 24, 0.88) 18%, rgba(4, 8, 18, 0.82) 100%),
+    linear-gradient(135deg, rgba(0, 255, 255, 0.04), rgba(183, 0, 255, 0.03)),
+    rgba(4, 8, 18, 0.78);
+  backdrop-filter: blur(44px) saturate(160%);
+  -webkit-backdrop-filter: blur(44px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
     0 10px 32px rgba(0, 0, 0, 0.38),
@@ -1243,7 +1349,7 @@ html.lenis, html.lenis body {
 }
 
 .site-dock__item-label {
-  font-family: 'Lexend Deca', sans-serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 0.96rem;
   line-height: 1;
   white-space: nowrap;
@@ -1292,6 +1398,18 @@ html.lenis, html.lenis body {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 0 24px rgba(0, 220, 255, 0.12);
+}
+
+/* Mobile: remove spinning gradient border & glow from Contact — feels odd on small screens */
+@media (max-width: 767px) {
+  .site-dock__item--contact::before {
+    display: none;
+  }
+
+  .site-dock__item--contact.is-active {
+    background: rgba(0, 220, 255, 0.1);
+    box-shadow: none;
+  }
 }
 
 .site-dock__chevron {
@@ -1489,7 +1607,7 @@ html.lenis, html.lenis body {
 
   .site-dock__brand-mobile-label {
     display: block;
-    font-family: 'Lexend Deca', sans-serif;
+    font-family: 'Source Sans 3', sans-serif;
     font-size: 0.68rem;
     line-height: 1;
   }

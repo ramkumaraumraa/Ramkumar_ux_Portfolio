@@ -47,34 +47,64 @@ const Footer = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ paused: true });
       
+      // Phase 1: Enter (0.0 to 0.5)
       tl.fromTo(
-        '.testimonial-card',
-        { opacity: 0, y: 60, z: -100, rotateX: 10 },
+        '.testimonial-wrapper',
+        { opacity: 0, scale: 0.2, z: -1000, rotateX: 20 },
         { 
           opacity: 1, 
-          y: 0, 
+          scale: 1,
           z: 0, 
           rotateX: 0, 
-          stagger: 0.15,
-          duration: 1, 
-          ease: 'power2.out',
-          clearProps: 'transform,rotateX,y,z' // ensure original CSS hover works!
+          stagger: 0.1,
+          duration: 0.5, 
+          ease: 'power2.out'
         },
-        0.2
+        0
       );
 
       tl.fromTo(
         '.footer-contact-plane',
-        { opacity: 0, y: 50, scale: 0.98 },
-        { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power2.out' },
-        0.4
+        { opacity: 0, scale: 0.5, z: -500 },
+        { opacity: 1, scale: 1, z: 0, duration: 0.5, ease: 'power2.out' },
+        0.2
+      );
+
+      // Phase 2: Exit Portal (0.5 to 1.0)
+      tl.to(
+        '.testimonial-wrapper',
+        { 
+          scale: 4,
+          z: 800, 
+          rotateX: -20, 
+          stagger: 0.05,
+          duration: 0.5, 
+          ease: 'power2.in'
+        },
+        0.5
+      );
+
+      tl.to(
+        '.footer-contact-panel',
+        { scale: 5, z: 1000, duration: 0.5, ease: 'power2.in' },
+        0.55
+      );
+
+      tl.to(
+        ['.testimonial-wrapper', '.footer-contact-panel'],
+        { opacity: 0, duration: 0.25, ease: 'power2.in' },
+        0.5
       );
 
       tlRef.current = tl;
+      tl.progress(localProgress);
     }, footerRef);
 
-    return () => ctx.revert();
-  }, []); // Run once on mount
+    return () => {
+      ctx.revert();
+      tlRef.current = null;
+    };
+  }, []); // Initialize with localProgress correctly, run once on mount
 
   useEffect(() => {
     if (tlRef.current) {
@@ -83,33 +113,35 @@ const Footer = () => {
   }, [localProgress]);
 
   return (
-    <section ref={footerRef} id="footer" className="footer-testimonials-section">
+    <div className="footer-wrapper" style={{ minHeight: '100%', display: 'flex', alignItems: 'center', width: '100%' }}>
+      <section ref={footerRef} id="footer" className="footer-testimonials-section">
       <div className="footer-testimonial-plane">
         {featuredTestimonials.map((testimonial, index) => {
           const isFeatured = testimonial.variant === 'featured';
 
           return (
-            <article
-              key={testimonial.name}
-              className={`testimonial-card testimonial-card--${testimonial.variant}`}
-            >
-              <p className="body-2 testimonial-quote">"{testimonial.description}"</p>
+            <div key={testimonial.name} className="testimonial-wrapper">
+              <article
+                className={`testimonial-card testimonial-card--${testimonial.variant}`}
+              >
+                <p className="body-2 testimonial-quote">"{testimonial.description}"</p>
 
-              <div className="testimonial-card-footer">
-                <Image
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  width={56}
-                  height={56}
-                  className="testimonial-img"
-                />
+                <div className="testimonial-card-footer">
+                  <Image
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    width={56}
+                    height={56}
+                    className="testimonial-img"
+                  />
 
-                <div className="testimonial-card-content">
-                  <p className="body-title-2">{testimonial.name}</p>
-                  <p className="footnote testimonial-role">{testimonial.role}</p>
+                  <div className="testimonial-card-content">
+                    <p className="body-title-2">{testimonial.name}</p>
+                    <p className="footnote testimonial-role">{testimonial.role}</p>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </article>
+            </div>
           );
         })}
       </div>
@@ -190,6 +222,7 @@ const Footer = () => {
 
       <Form isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
     </section>
+    </div>
   );
 };
 

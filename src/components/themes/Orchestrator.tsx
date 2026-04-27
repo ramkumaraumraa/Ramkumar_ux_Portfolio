@@ -6,9 +6,17 @@ import { Preload } from '@react-three/drei';
 import * as THREE from 'three';
 import HomeTheme from './Home_theme';
 import CameraRig from './CameraRig';
-import { Scenes } from './Scenes';
-import { ScenePostProcessing } from './ScenePostProcessing';
+import { EffectComposer, Bloom, Noise } from '@react-three/postprocessing';
 import { SECTION_THRESHOLDS, SECTION_IDS } from '@/lib/scrollConstants';
+
+
+const SECTION_FX: Record<string, { bloom: number; noise: number }> = {
+  home:    { bloom: 1.8,  noise: 0.015 },
+  works:   { bloom: 0.9,  noise: 0.02  },
+  about:   { bloom: 0.7,  noise: 0.02  },
+  process: { bloom: 1.1,  noise: 0.025 },
+  footer:  { bloom: 0.5,  noise: 0.03  },
+};
 
 interface OrchestratorProps {
   lenis?: any;
@@ -34,7 +42,6 @@ export default function Orchestrator({
   scrollProgressRef: externalScrollProgressRef,
   ...props
 }: OrchestratorProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scrollData, setScrollData] = useState({
     velocity: 0,
     direction: 0,
@@ -60,6 +67,8 @@ export default function Orchestrator({
     }
     setCurrentSection(section);
   };
+
+  const currentFx = SECTION_FX[currentSection] ?? SECTION_FX.home;
 
   const updateVelocityBuffer = (v: number) => {
     velocityBufferRef.current.push(v);
@@ -106,14 +115,6 @@ export default function Orchestrator({
 
 
 
-  useEffect(() => {
-    if (canvasRef.current) {
-      const timer = setTimeout(() => {
-        setCanvasReady(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [canvasRef.current]);
 
   useEffect(() => {
     if (canvasReady) {
@@ -123,10 +124,6 @@ export default function Orchestrator({
   }, [canvasReady]);
 
   if (!enabled) return null;
-
-  if (responsive.isMobile) {
-    return null; // The background/overlays are handled in page.tsx for mobile
-  }
 
   return (
     <div 
@@ -138,7 +135,7 @@ export default function Orchestrator({
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        zIndex: 1,
+        zIndex: -1500,
         opacity: canvasReady ? 1 : 0,
         transition: 'opacity 0.6s ease-out'
       }}
@@ -146,21 +143,27 @@ export default function Orchestrator({
       {/* Background is now rendered at the root level in page.tsx */}
 
       <Canvas
-          ref={canvasRef}
+          onCreated={({ gl }) => {
+            gl.setClearColor(0x000000, 0); // transparent so CSS layers show through
+            setTimeout(() => setCanvasReady(true), 100);
+          }}
           camera={{
             position: [0, 0, 0],
             fov: 75,
             near: 0.1,
             far: 200
           }}
-          gl={{
-            alpha: true,
-            antialias: true,
-            toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: 1.2,
-            powerPreference: 'high-performance'
-          }}
-          dpr={[1, responsive.isTablet ? 1.5 : 2]}
+      gl={{
+        alpha: true,
+        antialias: true,
+        stencil: false,
+        depth: true,
+        premultipliedAlpha: false,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.2,
+        powerPreference: 'high-performance'
+      }}
+          dpr={[1, (responsive.isMobile || responsive.isTablet) ? 1.5 : 2]}
           style={{
             position: 'absolute',
             top: 0,
@@ -184,13 +187,30 @@ export default function Orchestrator({
               intensityRef={intensityRef}
             />
 
-            <Scenes scrollProgressRef={scrollProgressRef} />
-
-            <ScenePostProcessing currentSection={currentSection} />
+            <PostEffects currentFx={currentFx} />
 
             <Preload all />
           </Suspense>
         </Canvas>
     </div>
+  );
+}
+
+function PostEffects({ currentFx }: { currentFx: any }) {
+  // Ensure the composer maintains transparency for the CSS background
+  return (
+    <EffectComposer 
+      multisampling={0} 
+      frameBufferType={THREE.HalfFloatType}
+      stencilBuffer={false}
+    >
+      <Bloom
+        intensity={currentFx.bloom}
+        luminanceThreshold={0.8}
+        luminanceSmoothing={0.1}
+        mipmapBlur
+      />
+      <Noise opacity={currentFx.noise} />
+    </EffectComposer>
   );
 }

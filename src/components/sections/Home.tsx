@@ -2,18 +2,17 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
+import { useSectionProgress } from '@/hooks/useSectionProgress';
 
 const TEXTS = [
-  { pre: 'HUMANIZING', main: 'TECH THROUGH', post: 'DESIGN', colorClass: 'turquoise' },
-  { pre: 'CRAFTING IMMERSIVE', main: 'EXPERIENCES', post: 'THAT RESONATE DEEPLY', colorClass: 'turquoise' },
-  { pre: 'DESIGNING FOR THE', main: 'FUTURE, INSPIRED', post: 'BY THE PAST', colorClass: 'turquoise' },
+  { pre: 'HUMANIZING', main: 'TECH THROUGH', post: 'DESIGN' },
+  { pre: 'CRAFTING IMMERSIVE', main: 'EXPERIENCES', post: 'THAT RESONATE DEEPLY' },
+  { pre: 'DESIGNING FOR THE', main: 'FUTURE, INSPIRED', post: 'BY THE PAST' },
 ];
 
-export default function Home() {
+export default function Home({ activeSection = 'home' }: { activeSection?: string }) {
   const [index, setIndex] = useState(0);
   const blockRef = useRef<HTMLDivElement>(null);
-  const glowRedRef = useRef<HTMLDivElement>(null);
-  const glowCyanRef = useRef<HTMLDivElement>(null);
   
   const cycleTimerRef = useRef<gsap.core.Tween | null>(null);
   const isAnimatingRef = useRef(false);
@@ -24,7 +23,7 @@ export default function Home() {
     isTablet: false
   });
 
-  const { pre, main, post, colorClass } = TEXTS[index];
+  const { pre, main, post } = TEXTS[index];
 
   useEffect(() => {
     setResponsive({
@@ -43,62 +42,135 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const hasAnimatedIn = useRef(false);
+
+  const localProgress = useSectionProgress(0); // Home is index 0
+
+  useEffect(() => {
+    const block = blockRef.current;
+    if (!block || !hasAnimatedIn.current) return;
+
+    // Use localProgress to drive the Zoom Past (Portal) effect
+    // 0.0 to 0.5: Approaching (For circular scroll from Footer)
+    // 0.5: Docked
+    // 0.5 to 1.0: Zooming Past (Flying to Works)
+    
+    if (localProgress <= 0.5) {
+      const enterP = localProgress * 2; // Map 0-0.5 to 0-1
+      gsap.to(block, { 
+        z: (1 - enterP) * -600, 
+        scale: 0.2 + enterP * 0.8, 
+        opacity: enterP, 
+        duration: 0.2, 
+        overwrite: 'auto' 
+      });
+    } else {
+      const exitP = (localProgress - 0.5) * 2; // Map 0.5-1 to 0-1
+      gsap.to(block, { 
+        z: exitP * 600, 
+        scale: 1 + exitP * 4, 
+        opacity: Math.max(0, 1 - exitP * 3), 
+        duration: 0.2, 
+        overwrite: 'auto' 
+      });
+    }
+  }, [localProgress]);
+
+  useEffect(() => {
+    const block = blockRef.current;
+    if (!block) return;
+    hasAnimatedIn.current = true;
+    
+    // Zoom scale/Z 
+    gsap.fromTo(block, 
+      { z: -600, scale: 0.1 }, 
+      { z: 0, scale: 1, duration: 2.5, ease: 'power4.out', force3D: true }
+    );
+    // Faster fade-in
+    gsap.fromTo(block,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.8, ease: 'power2.out' }
+    );
+  }, []);
+
   const createTextElements = useCallback(() => {
     if (!blockRef.current) return null;
 
     const container = document.createElement('div');
     container.className = 'text-lines';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.alignItems = 'center';
+    container.style.justifyContent = 'center';
+    container.style.textAlign = 'center';
     
+    // Helper: wrap each word in a nowrap container so mobile breaks between words, not mid-char
+    const appendChars = (parent: HTMLElement, text: string) => {
+      const words = text.split(' ');
+      words.forEach((word, wi) => {
+        // Word wrapper — keeps chars together, allows line break between words
+        const wordSpan = document.createElement('span');
+        wordSpan.style.display = 'inline-flex';
+        wordSpan.style.whiteSpace = 'nowrap';
+
+        [...word].forEach(char => {
+          const span = document.createElement('span');
+          span.className = 'char';
+          span.textContent = char;
+          span.style.display = 'inline-block';
+          wordSpan.appendChild(span);
+        });
+
+        parent.appendChild(wordSpan);
+
+        // Add a space between words (not inside the nowrap wrapper)
+        if (wi < words.length - 1) {
+          const space = document.createElement('span');
+          space.className = 'char';
+          space.textContent = '\u00A0';
+          space.style.display = 'inline-block';
+          parent.appendChild(space);
+        }
+      });
+    };
+
+    // Clean white text styles
+    const setCleanWhite = (el: HTMLElement) => {
+      el.style.color = '#ffffff';
+      el.style.textShadow = 'none';
+      el.style.margin = '0.1em 0';
+    };
+
     // Line 1
     const line1 = document.createElement('div');
     line1.className = 'line line-1';
     const h3_1 = document.createElement('h3');
-    h3_1.className = `neon ${colorClass}`;
-    [...pre].forEach(char => {
-      const span = document.createElement('span');
-      span.className = 'char';
-      span.textContent = char === ' ' ? '\u00A0' : char;
-      span.style.display = 'inline-block';
-      h3_1.appendChild(span);
-    });
+    setCleanWhite(h3_1);
+    appendChars(h3_1, pre);
     line1.appendChild(h3_1);
     
     // Line 2
     const line2 = document.createElement('div');
     line2.className = 'line line-2';
     const h1 = document.createElement('h1');
-    h1.className = 'neon pink';
-    [...main].forEach(char => {
-      const span = document.createElement('span');
-      span.className = 'char';
-      span.textContent = char === ' ' ? '\u00A0' : char;
-      span.style.display = 'inline-block';
-      h1.appendChild(span);
-    });
+    setCleanWhite(h1);
+    appendChars(h1, main);
     line2.appendChild(h1);
     
     // Line 3
     const line3 = document.createElement('div');
     line3.className = 'line line-3';
     const h3_3 = document.createElement('h3');
-    h3_3.className = `neon ${colorClass}`;
-    [...post].forEach(char => {
-      const span = document.createElement('span');
-      span.className = 'char';
-      span.textContent = char === ' ' ? '\u00A0' : char;
-      span.style.display = 'inline-block';
-      h3_3.appendChild(span);
-    });
+    setCleanWhite(h3_3);
+    appendChars(h3_3, post);
     line3.appendChild(h3_3);
     
     container.appendChild(line1);
-    container.appendChild(document.createElement('br'));
     container.appendChild(line2);
-    container.appendChild(document.createElement('br'));
     container.appendChild(line3);
     
     return container;
-  }, [pre, main, post, colorClass]);
+  }, [pre, main, post]);
 
   useLayoutEffect(() => {
     if (!blockRef.current) return;
@@ -107,26 +179,15 @@ export default function Home() {
       contextRef.current.revert();
     }
 
-    const fullText = `${pre} ${main} ${post}`;
-    if (glowRedRef.current) glowRedRef.current.textContent = fullText;
-    if (glowCyanRef.current) glowCyanRef.current.textContent = fullText;
-
     const textContainer = createTextElements();
     if (!textContainer) return;
 
-    const glowElements = blockRef.current.querySelectorAll('.glow');
-    const lastGlow = glowElements[glowElements.length - 1];
-    
     const existingLines = blockRef.current.querySelector('.text-lines');
     if (existingLines) {
       existingLines.remove();
     }
 
-    if (lastGlow && lastGlow.nextSibling) {
-      blockRef.current.insertBefore(textContainer, lastGlow.nextSibling);
-    } else {
-      blockRef.current.appendChild(textContainer);
-    }
+    blockRef.current.appendChild(textContainer);
 
     contextRef.current = gsap.context(() => {
       const line1Chars = textContainer.querySelectorAll('.line-1 .char');
@@ -164,9 +225,15 @@ export default function Home() {
 
       const masterTl = gsap.timeline();
 
+      // Line 1 entry
+      masterTl.to(line1Chars, {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power2.out',
+        stagger: { each: 0.06, from: 'start' }
+      }, 0);
       masterTl.to(line1Chars, {
         scale: 1,
-        opacity: 1,
         x: 0,
         filter: 'blur(0px)',
         duration: 4,
@@ -175,9 +242,15 @@ export default function Home() {
         force3D: true
       }, 0);
 
+      // Line 2 entry
+      masterTl.to(line2Chars, {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power2.out',
+        stagger: { each: 0.05, from: 'center' }
+      }, 0.4);
       masterTl.to(line2Chars, {
         scale: 1,
-        opacity: 1,
         x: 0,
         filter: 'blur(0px)',
         duration: 4,
@@ -186,9 +259,15 @@ export default function Home() {
         force3D: true
       }, 0.4);
 
+      // Line 3 entry
+      masterTl.to(line3Chars, {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power2.out',
+        stagger: { each: 0.06, from: 'end' }
+      }, 0.8);
       masterTl.to(line3Chars, {
         scale: 1,
-        opacity: 1,
         x: 0,
         filter: 'blur(0px)',
         duration: 4,
@@ -196,20 +275,6 @@ export default function Home() {
         stagger: { each: 0.06, from: 'end' },
         force3D: true
       }, 0.8);
-
-      gsap.fromTo('.glow.glow--red', {
-        x: -4, y: 4, opacity: 0.4, filter: 'blur(15px)', scale: 0.8
-      }, {
-        x: 0, y: 0, opacity: 0.08, filter: 'blur(3px)', scale: 1,
-        duration: 5, ease: 'power4.out'
-      });
-
-      gsap.fromTo('.glow.glow--cyan', {
-        x: 4, y: -4, opacity: 0.4, filter: 'blur(15px)', scale: 0.8
-      }, {
-        x: 0, y: 0, opacity: 0.08, filter: 'blur(3px)', scale: 1,
-        duration: 5, ease: 'power4.out'
-      });
 
     }, blockRef);
 
@@ -286,14 +351,6 @@ export default function Home() {
           stagger: { each: 0.03, from: 'end' },
           force3D: true
         }, 0.4);
-
-        exitTl.to(['.glow.glow--red', '.glow.glow--cyan'], {
-          opacity: 0,
-          filter: 'blur(20px)',
-          scale: 0.7,
-          duration: 1.5,
-          ease: 'power4.inOut',
-        }, 0);
       });
     };
     
@@ -309,11 +366,11 @@ export default function Home() {
 
 
   return (
-    <section id="hero" className="home cinematic-hero" aria-labelledby="hero-text">
-      <div className="hero-block" ref={blockRef} id="hero-text" aria-live="polite">
-        <div className="glow glow--red" ref={glowRedRef} aria-hidden="true" />
-        <div className="glow glow--cyan" ref={glowCyanRef} aria-hidden="true" />
-      </div>
-    </section>
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', perspective: '1200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <section id="hero" className="home cinematic-hero" aria-labelledby="hero-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+        <div className="hero-block" ref={blockRef} id="hero-text" aria-live="polite" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+        </div>
+      </section>
+    </div>
   );
 }

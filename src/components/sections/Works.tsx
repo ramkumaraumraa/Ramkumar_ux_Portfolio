@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
 import { useSectionProgress } from '@/hooks/useSectionProgress';
@@ -33,6 +33,12 @@ const Works = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const descriptionRefs = useRef<(HTMLParagraphElement | null)[]>([]);
+  const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const hoverTweens = useRef<(gsap.core.Tween | null)[]>([]);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [descriptionHeights, setDescriptionHeights] = useState<number[]>([]);
 
   const cardData = [
     {
@@ -82,92 +88,201 @@ const Works = () => {
   const localProgress = useSectionProgress(1, 0.7); // Works is index 1, delay text reveal until 70% approaching
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const syncViewport = () => {
+      setIsMobileViewport(mediaQuery.matches);
+    };
+
+    syncViewport();
+    mediaQuery.addEventListener('change', syncViewport);
+
+    return () => {
+      mediaQuery.removeEventListener('change', syncViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const measureDescriptions = () => {
+      setDescriptionHeights(
+        descriptionRefs.current.map((description) => description?.scrollHeight ?? 0)
+      );
+    };
+
+    const animationFrame = window.requestAnimationFrame(measureDescriptions);
+    const resizeObserver = new ResizeObserver(measureDescriptions);
+
+    descriptionRefs.current.forEach((description) => {
+      if (description) {
+        resizeObserver.observe(description);
+      }
+    });
+
+    document.fonts.ready.then(measureDescriptions);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMobileViewport) {
+      setHoveredIndex(null);
+    }
+  }, [isMobileViewport]);
+
+  useEffect(() => {
     if (!sectionRef.current) return;
 
     // Initial strict centering setup
-    gsap.set(cardRefs.current, {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      xPercent: -50,
-      yPercent: -50,
-      scale: 0.5,
-      opacity: 0,
-      transformOrigin: '50% 50%',
-      force3D: true
-    });
+    const isMobile = window.innerWidth <= 768;
+    
+    if (!isMobile) {
+      gsap.set(cardRefs.current, {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        xPercent: -50,
+        yPercent: -50,
+        scale: 0.5,
+        opacity: 0,
+        transformOrigin: '50% 50%',
+        force3D: true
+      });
+    } else {
+      gsap.set(cardRefs.current, {
+        position: 'relative',
+        scale: 1,
+        opacity: 1, // Let CSS handle mobile layout
+      });
+      // Return early for mobile so we don't run the desktop scrub timeline
+      return;
+    }
 
     const positions = getPositions();
     const tl = gsap.timeline({ paused: true });
+    timelineRef.current = tl;
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
-      tl.to(card, {
+      
+      // Phase 1: Enter (0 -> 0.5)
+      tl.fromTo(card, {
+        xPercent: -50,
+        yPercent: -50,
+        scale: 0.1,
+        opacity: 0,
+        rotation: 0
+      }, {
         xPercent: positions[i].xPercent - 50,
         yPercent: positions[i].yPercent - 50,
-        rotation: positions[i].rotate,
         scale: positions[i].scale,
+        rotation: positions[i].rotate,
         opacity: 1,
         zIndex: positions[i].zIndex,
         ease: 'power2.out',
-        duration: 1, // Timeline relative duration
+        duration: 0.5,
         force3D: true
-      }, i * 0.05); // slight stagger in the timeline
+      }, 0);
+
+      // Phase 2: Exit Portal (0.5 -> 1.0)
+      tl.to(card, {
+        xPercent: (positions[i].xPercent * 3) - 50,
+        yPercent: (positions[i].yPercent * 3) - 50,
+        scale: 4,
+        rotation: positions[i].rotate * 2,
+        duration: 0.5,
+        ease: 'power2.in',
+        force3D: true
+      }, 0.5);
+      
+      // Fade out explicitly faster
+      tl.to(card, {
+        opacity: 0,
+        duration: 0.25,
+        ease: 'power2.in'
+      }, 0.5);
     });
 
-    // Drive timeline progress by local scroll progress
+    // Initialize progress
     tl.progress(localProgress);
 
     return () => {
       tl.kill();
+      timelineRef.current = null;
     };
-  }, [getPositions, localProgress]);
+  }, [getPositions]);
+
+  useEffect(() => {
+    if (timelineRef.current) {
+      timelineRef.current.progress(localProgress);
+    }
+  }, [localProgress]);
 
   const handleMouseEnter = (index: number) => {
+    if (isMobileViewport) return;
+
     const card = cardRefs.current[index];
     if (!card) return;
 
     const positions = getPositions();
+    setHoveredIndex(index);
     
-    gsap.to(card, {
+    // Kill any active hover tweens for this card to prevent conflicts, 
+    // without killing the main timeline properties
+    if (hoverTweens.current[index]) hoverTweens.current[index]?.kill();
+
+    // Set z-index immediately to prevent overlap issues during the tween
+    gsap.set(card, { zIndex: 100 });
+
+    hoverTweens.current[index] = gsap.to(card, {
       scale: positions[index].scale + 0.1,
-      zIndex: 50,
+      opacity: 1,
       rotation: 0, // Straighten the hovered card
       duration: 0.5,
       ease: 'power3.out',
-      overwrite: 'auto'
+      overwrite: false
     });
 
     // Dim sideways siblings
     cardRefs.current.forEach((c, i) => {
       if (i !== index && c) {
-        gsap.to(c, {
+        if (hoverTweens.current[i]) hoverTweens.current[i]?.kill();
+        hoverTweens.current[i] = gsap.to(c, {
           scale: positions[i].scale - 0.05,
           opacity: 0.4,
           duration: 0.5,
           ease: 'power3.out',
-          overwrite: 'auto'
+          overwrite: false
         });
       }
     });
   };
 
   const handleMouseLeave = (index: number) => {
+    if (isMobileViewport) return;
+
     const card = cardRefs.current[index];
     if (!card) return;
 
     const positions = getPositions();
+    setHoveredIndex((currentIndex) => (currentIndex === index ? null : currentIndex));
 
     cardRefs.current.forEach((c, i) => {
       if (c) {
-        gsap.to(c, {
+        if (hoverTweens.current[i]) hoverTweens.current[i]?.kill();
+        hoverTweens.current[i] = gsap.to(c, {
           scale: positions[i].scale,
           rotation: positions[i].rotate,
           opacity: 1,
           zIndex: positions[i].zIndex,
           duration: 0.5,
           ease: 'power3.out',
-          overwrite: 'auto'
+          overwrite: false
         });
       }
     });
@@ -176,67 +291,80 @@ const Works = () => {
   return (
     <div id="works" className="relative h-full">
       <section
-        className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden"
+        className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden works-section-mobile"
         ref={sectionRef}
       >
       <div
-        className="relative w-full h-full flex items-center justify-center"
+        className="works-container relative w-full h-full flex items-center justify-center"
         ref={containerRef}
       >
         {cardData.map((card, index) => (
-          <div
-            className="group absolute w-[260px] md:w-[300px] lg:w-[340px] aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] transition-colors duration-300 border border-white/5 bg-neutral-900/60 backdrop-blur-xl cursor-pointer hover:border-emerald-500/30"
-            key={`case-study-${index}`}
-            ref={(el) => { cardRefs.current[index] = el; }}
-            onClick={() => window.open(card.link, '_blank')}
-            onMouseEnter={() => handleMouseEnter(index)}
-            onMouseLeave={() => handleMouseLeave(index)}
-          >
-            {/* Image Container */}
-            <div className="relative w-full h-[55%] overflow-hidden">
-              <div className="absolute inset-0 bg-neutral-800 animate-pulse" />
-              <Image 
-                src={card.image} 
-                alt={`${index + 1}. ${card.title}`}
-                fill
-                sizes="(max-width: 768px) 100vw, 340px"
-                className="object-cover transition-transform duration-[1.5s] group-hover:scale-110 ease-out"
-                priority={index === 2} // prioritize center card
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-neutral-900/95" />
-            </div>
+          (() => {
+            const isDescriptionVisible = isMobileViewport || hoveredIndex === index;
+            const descriptionHeight = descriptionHeights[index] ?? 140;
 
-            {/* Content Container */}
-            <div className="absolute top-1/2 bottom-0 w-full p-6 md:p-8 flex flex-col justify-end">
-              {/* Background Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
-              
-              <div className="relative z-10 flex flex-col gap-1 transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                {/* Use div instead of h3 to prevent global CSS from making it huge */}
-                <div className="text-sm md:text-base font-bold text-white tracking-tight leading-snug m-0 p-0">
-                  {card.title}
+            return (
+              <div
+                className="group relative md:absolute w-[260px] md:w-[300px] lg:w-[340px] aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] transition-colors duration-300 border border-white/5 bg-neutral-900/60 backdrop-blur-xl cursor-pointer hover:border-emerald-500/30 shrink-0"
+                key={`case-study-${index}`}
+                ref={(el) => { cardRefs.current[index] = el; }}
+                onClick={() => window.open(card.link, '_blank')}
+                onMouseEnter={() => handleMouseEnter(index)}
+                onMouseLeave={() => handleMouseLeave(index)}
+              >
+                {/* Image Container */}
+                <div className="relative w-full h-[55%] overflow-hidden">
+                  <div className="absolute inset-0 bg-neutral-800 animate-pulse" />
+                  <Image 
+                    src={card.image} 
+                    alt={`${index + 1}. ${card.title}`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 340px"
+                    className="object-cover transition-transform duration-[1.5s] group-hover:scale-110 ease-out"
+                    priority={index === 2} // prioritize center card
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-neutral-900/95" />
                 </div>
-                
-                {/* Expandable Description */}
-                <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-out">
-                  <div className="overflow-hidden">
-                    <p className="text-xs md:text-sm text-neutral-300 line-clamp-2 leading-relaxed pt-1">
-                      {card.description}
+
+                {/* Content Container */}
+                <div className="absolute inset-0 top-[35%] w-full p-5 md:p-6 flex flex-col justify-end">
+                  {/* Background Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  
+                  <div className="relative z-10 flex flex-col gap-2">
+                    {/* Card Title — always visible, sits at top of content area */}
+                    <p className="body-title-4" style={{ margin: 0, padding: 0 }}>
+                      {card.title}
                     </p>
+                    
+                    {/* Description reveal follows the same JS hover state as the GSAP card animation. */}
+                    <div
+                      className="overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-out"
+                      style={{
+                        maxHeight: isDescriptionVisible ? `${descriptionHeight}px` : '0px',
+                        opacity: isDescriptionVisible ? 1 : 0,
+                        transform: `translateY(${isDescriptionVisible ? 0 : 8}px)`,
+                      }}
+                    >
+                      <p
+                        className="footnote text-neutral-300 pt-1 m-0"
+                        ref={(el) => { descriptionRefs.current[index] = el; }}
+                      >
+                        {card.description}
+                      </p>
+                    </div>
+                    
+                    {/* Arrow CTA — clean, no duplicate text */}
+                    <div className="flex justify-end mt-1">
+                      <span className="text-emerald-400 group-hover:text-emerald-300 transition-colors duration-300 text-base font-semibold transform translate-x-0 group-hover:translate-x-1 transition-transform duration-300">
+                        →
+                      </span>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="mt-1 flex items-center text-emerald-400 text-xs md:text-sm font-semibold transition-colors duration-300 group-hover:text-emerald-300">
-                  <span className="relative flex items-center gap-2">
-                    Explore the journey
-                    <span className="transform translate-x-0 transition-transform duration-300 group-hover:translate-x-1">
-                      →
-                    </span>
-                  </span>
-                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()
         ))}
       </div>
       </section>

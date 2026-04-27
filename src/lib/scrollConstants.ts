@@ -23,7 +23,7 @@ export const SPLINE_POINTS: [number, number, number][] = [
 ];
 
 // Scroll progress (0 to 1) transition thresholds between sections (home→works, works→about, …)
-export const SECTION_THRESHOLDS = [0.18, 0.36, 0.54, 0.72] as const;
+export const SECTION_THRESHOLDS = [0.125, 0.375, 0.625, 0.875] as const;
 
 // Exact dock progress values for direct navigation (matches SECTION_Z_POSITIONS / TOTAL_DEPTH).
 // Footer uses 0.9999 instead of 1.0 to avoid wrap-around to home in the circular scroll.

@@ -8,18 +8,12 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Loader from '../components/Loader';
 import Cursor from '../components/Cursor';
 import Navbar from '../components/Navbar';
-import Background from '../components/themes/Background';
-import { SectionPanel } from '../components/themes/SectionPanel';
 import SectionChrome from '../components/themes/SectionChrome';
 import SectionOverlay from '../components/themes/SectionOverlay';
-import HomeOverlay from '../components/themes/HomeOverlay';
+import SocialSidebar from '../components/StickySidebar';
 
 const Orchestrator = dynamic(() => import('../components/themes/Orchestrator'), { ssr: false });
-const HomeSection    = dynamic(() => import('../components/sections/Home'),    { ssr: false });
-const WorksSection   = dynamic(() => import('../components/sections/Works'),   { ssr: false });
-const AboutSection   = dynamic(() => import('../components/sections/About'),   { ssr: false });
-const ProcessSection = dynamic(() => import('../components/sections/Process'), { ssr: false });
-const FooterSection  = dynamic(() => import('../components/sections/Footer'),  { ssr: false });
+const Background     = dynamic(() => import('../components/themes/Background'),  { ssr: false });
 
 import {
   SECTION_THRESHOLDS,
@@ -28,10 +22,26 @@ import {
   VIRTUAL_MAX
 } from '@/lib/scrollConstants';
 
+type LenisScrollPayload = {
+  scroll: number;
+  progress: number;
+  velocity: number;
+  direction: 1 | -1;
+};
+
+type LenisListener = (payload: LenisScrollPayload) => void;
+
+type LenisShim = {
+  readonly scroll: number;
+  on(event: 'scroll', fn: LenisListener): void;
+  off(event: 'scroll', fn: LenisListener): void;
+  emit(event: 'scroll', data: LenisScrollPayload): void;
+};
+
 export default function Page() {
   const [loaderComplete, setLoaderComplete]   = useState(false);
-  const [backgroundReady, setBackgroundReady] = useState(false);
   const [preparingExit, setPreparingExit]     = useState(false);
+  const [orchestratorReady, setOrchestratorReady] = useState(false);
   const [activeSection, setActiveSection]     = useState('home');
 
   // Virtual scroll state — no proxy div, no window.scrollY
@@ -46,14 +56,19 @@ export default function Page() {
   const [responsive, setResponsive] = useState({ isMobile: false, isTablet: false });
 
   // Full event-emitter shim — Orchestrator's lenis.on('scroll') path works normally
-  const lenisRef = useRef<any>(
+  const lenisRef = useRef<LenisShim>(
     (() => {
-      const listeners: Record<string, Set<Function>> = {};
+      const listeners: Record<'scroll', Set<LenisListener>> = {
+        scroll: new Set<LenisListener>(),
+      };
+
       return {
         get scroll() { return virtualScrollRef.current; },
-        on(event: string, fn: Function)  { (listeners[event] ??= new Set()).add(fn); },
-        off(event: string, fn: Function) { listeners[event]?.delete(fn); },
-        emit(event: string, data: any)   { listeners[event]?.forEach(fn => fn(data)); },
+        on(event: 'scroll', fn: LenisListener)  { listeners[event].add(fn); },
+        off(event: 'scroll', fn: LenisListener) { listeners[event].delete(fn); },
+        emit(event: 'scroll', data: LenisScrollPayload) {
+          listeners[event].forEach((fn) => fn(data));
+        },
       };
     })()
   );
@@ -71,9 +86,21 @@ export default function Page() {
 
   /* Preload WebGL before loader exits */
   useEffect(() => {
-    const onExit = () => setPreparingExit(true);
+    const onExit = () => {
+      setPreparingExit(true);
+    };
+
+    const onOrchestratorReady = () => {
+      setOrchestratorReady(true);
+    };
+
     window.addEventListener('loader-exiting', onExit);
-    return () => window.removeEventListener('loader-exiting', onExit);
+    window.addEventListener('orchestrator-ready', onOrchestratorReady);
+
+    return () => {
+      window.removeEventListener('loader-exiting', onExit);
+      window.removeEventListener('orchestrator-ready', onOrchestratorReady);
+    };
   }, []);
 
   // ── Detect section from virtual progress ──────────────────────
@@ -100,12 +127,8 @@ export default function Page() {
     const tick = () => {
       const prev = virtualScrollRef.current;
 
-      targetScrollRef.current = ((targetScrollRef.current % VIRTUAL_MAX) + VIRTUAL_MAX) % VIRTUAL_MAX;
-
-      let diff = targetScrollRef.current - prev;
-      if (Math.abs(diff) > VIRTUAL_MAX / 2) {
-        diff -= Math.sign(diff) * VIRTUAL_MAX;
-      }
+      targetScrollRef.current = Math.max(0, Math.min(VIRTUAL_MAX, targetScrollRef.current));
+      const diff = targetScrollRef.current - prev;
 
       const currentProgress = prev / VIRTUAL_MAX;
 
@@ -113,8 +136,7 @@ export default function Page() {
       let isNearDock = false;
       for (const t of SECTION_THRESHOLDS) {
         const d = Math.abs(currentProgress - t);
-        const wrappedD = Math.min(d, 1 - d);
-        if (wrappedD < SNAP_RADIUS) {
+        if (d < SNAP_RADIUS) {
           isNearDock = true;
           break;
         }
@@ -128,22 +150,43 @@ export default function Page() {
       // Slower dynamic ease if it's a navigation jump
       const dynamicEase = isNavJumpRef.current ? 0.03 : (isNearDock ? 0.025 : 0.07);
       virtualScrollRef.current += diff * dynamicEase;
-      virtualScrollRef.current = ((virtualScrollRef.current % VIRTUAL_MAX) + VIRTUAL_MAX) % VIRTUAL_MAX;
+      virtualScrollRef.current = Math.max(0, Math.min(VIRTUAL_MAX, virtualScrollRef.current));
 
       if (isTargetMet) {
         virtualScrollRef.current = targetScrollRef.current;
       }
 
-      const progress = virtualScrollRef.current / VIRTUAL_MAX;
+      // ── MAGNETIC PINNING LOGIC ──
+      // Map raw virtual progress to a stepped curve with plateaus at each section dock
+      const rawProgress = virtualScrollRef.current / VIRTUAL_MAX;
+      
+      const getMappedProgress = (raw: number) => {
+        const docks = [0, 0.25, 0.5, 0.75, 1.0];
+        const plateauWidth = 0.12; // 12% of each segment is a locked plateau
+        
+        for (let i = 0; i < docks.length - 1; i++) {
+          const start = docks[i];
+          const end = docks[i+1];
+          if (raw >= start && raw <= end) {
+            const seg = (raw - start) / (end - start);
+            if (seg < plateauWidth) return start;
+            if (seg > 1 - plateauWidth) return end;
+            const t = (seg - plateauWidth) / (1 - 2 * plateauWidth);
+            const smoothT = t * t * (3 - 2 * t);
+            return start + smoothT * (end - start);
+          }
+        }
+        return raw;
+      };
+
+      const progress = getMappedProgress(rawProgress);
       const rawDelta = virtualScrollRef.current - lastVirtual;
 
       if (progress !== scrollProgressRef.current || Math.abs(rawDelta) > 0.01) {
         scrollProgressRef.current = progress;
         
-        // Only dynamically track sections if we aren't warping. Warping locks the destination early.
-        if (!isNavJumpRef.current) {
-          updateSection(progress);
-        }
+        // Update active section based on the MAPPED progress
+        updateSection(progress);
         
         ScrollTrigger.update();
 
@@ -177,24 +220,79 @@ export default function Page() {
 
     rafIdRef.current = requestAnimationFrame(tick);
 
-    const WHEEL_MULT = 1.4;
-    const TOUCH_MULT = 2.5;
+    const cooldownMs = 1000; // Time locked out after a jump
+    let lastJumpTime = 0;
+
+    const triggerJump = (direction: 'next' | 'prev') => {
+      const now = Date.now();
+      if (now - lastJumpTime < cooldownMs) return;
+
+      const currentProgress = scrollProgressRef.current;
+      let currentIndex = 0;
+      let minDiff = Infinity;
+      SECTION_DOCK_PROGRESS.forEach((dock, idx) => {
+        const d = Math.abs(currentProgress - dock);
+        if (d < minDiff) {
+          minDiff = d;
+          currentIndex = idx;
+        }
+      });
+
+      const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+      
+      // Enforce hard stops at the beginning and end
+      if (nextIndex >= SECTION_DOCK_PROGRESS.length) {
+         return; // Hard stop at the bottom (Footer)
+      } else if (nextIndex < 0) {
+         return; // Hard stop at the top (Home)
+      }
+
+      targetScrollRef.current = SECTION_DOCK_PROGRESS[nextIndex] * VIRTUAL_MAX;
+      isNavJumpRef.current = true;
+      lastJumpTime = now;
+      
+      setMobileSwipeCue(direction === 'next' ? 'down' : 'up');
+      setTimeout(() => setMobileSwipeCue(null), 800);
+    };
+
+    let wheelTimeout: NodeJS.Timeout;
 
     const onTouchStart = (e: TouchEvent) => {
       touchStartY.current = e.touches[0].clientY;
     };
 
     if (!responsive.isMobile) {
-      // Desktop: wheel + touch both drive virtual scroll directly.
+      // Desktop: wheel + touch trigger discrete jumps
+      const WHEEL_THRESHOLD = 30; 
+      const TOUCH_THRESHOLD = 40; 
+      let cumulativeWheel = 0;
+
       const onWheel = (e: WheelEvent) => {
         e.preventDefault();
-        targetScrollRef.current += e.deltaY * WHEEL_MULT;
+        cumulativeWheel += e.deltaY;
+        
+        if (cumulativeWheel > WHEEL_THRESHOLD) {
+          triggerJump('next');
+          cumulativeWheel = 0;
+        } else if (cumulativeWheel < -WHEEL_THRESHOLD) {
+          triggerJump('prev');
+          cumulativeWheel = 0;
+        }
+        
+        clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(() => { cumulativeWheel = 0; }, 150);
       };
+
       const onTouchMoveDesktop = (e: TouchEvent) => {
         e.preventDefault();
         const dy = touchStartY.current - e.touches[0].clientY;
-        touchStartY.current = e.touches[0].clientY;
-        targetScrollRef.current += dy * TOUCH_MULT;
+        if (dy > TOUCH_THRESHOLD) {
+          triggerJump('next');
+          touchStartY.current = e.touches[0].clientY;
+        } else if (dy < -TOUCH_THRESHOLD) {
+          triggerJump('prev');
+          touchStartY.current = e.touches[0].clientY;
+        }
       };
 
       window.addEventListener('wheel', onWheel, { passive: false });
@@ -208,13 +306,11 @@ export default function Page() {
         window.removeEventListener('touchmove', onTouchMoveDesktop);
         document.documentElement.style.overflow = '';
         document.body.style.overflow = '';
+        clearTimeout(wheelTimeout);
       };
     }
 
     // Mobile — boundary-aware touch navigation.
-    // Swipe inside a scrollable section panel scrolls the content natively.
-    // At the top/bottom edge of a panel, or outside any scrollable element,
-    // the swipe drives the virtual scroll so users can navigate between sections.
     const getScrollableAncestor = (el: Element | null): Element | null => {
       while (el && el !== document.documentElement) {
         if (el.scrollHeight > el.clientHeight + 1) {
@@ -226,34 +322,27 @@ export default function Page() {
       return null;
     };
 
+    const TOUCH_THRESHOLD_MOBILE = 30;
+
     const onTouchMoveMobile = (e: TouchEvent) => {
       const dy = touchStartY.current - e.touches[0].clientY;
-      touchStartY.current = e.touches[0].clientY;
-
       const scrollable = getScrollableAncestor(e.target as Element);
 
       if (scrollable) {
         const atTop = scrollable.scrollTop <= 0;
         const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
 
-        if ((dy > 0 && atBottom) || (dy < 0 && atTop)) {
-          // At a scroll boundary — hand off to virtual section navigation.
+        if ((dy > TOUCH_THRESHOLD_MOBILE && atBottom) || (dy < -TOUCH_THRESHOLD_MOBILE && atTop)) {
           e.preventDefault();
-          targetScrollRef.current += dy * TOUCH_MULT;
-          
-          // Show visual cue for mobile
-          setMobileSwipeCue(dy > 0 ? 'down' : 'up');
-          setTimeout(() => setMobileSwipeCue(null), 800);
+          triggerJump(dy > 0 ? 'next' : 'prev');
+          touchStartY.current = e.touches[0].clientY;
         }
-        // else: content not at edge, let native scrolling handle it.
       } else {
-        // Not inside any scrollable element — drive virtual navigation.
-        e.preventDefault();
-        targetScrollRef.current += dy * TOUCH_MULT;
-        
-        // Show visual cue for mobile
-        setMobileSwipeCue(dy > 0 ? 'down' : 'up');
-        setTimeout(() => setMobileSwipeCue(null), 800);
+        if (Math.abs(dy) > TOUCH_THRESHOLD_MOBILE) {
+          e.preventDefault();
+          triggerJump(dy > 0 ? 'next' : 'prev');
+          touchStartY.current = e.touches[0].clientY;
+        }
       }
     };
 
@@ -271,16 +360,15 @@ export default function Page() {
 
   // ── Nav-click scroll (jump to section by progress) ───────────
   const handleSetActiveTab = useCallback((tab: string) => {
-    const idx = SECTION_IDS.indexOf(tab as any);
+    const section = SECTION_IDS.find((id) => id === tab);
+    if (!section) return;
+
+    const idx = SECTION_IDS.indexOf(section);
     if (idx < 0) return;
     targetScrollRef.current = SECTION_DOCK_PROGRESS[idx] * VIRTUAL_MAX;
     setActiveSection(tab);
     isNavJumpRef.current = true;
   }, []);
-
-  useEffect(() => {
-    if (backgroundReady) (window as any).backgroundReady = true;
-  }, [backgroundReady]);
 
   // Fix 1: Warm up SectionPanel progress values immediately after loader exits
   useEffect(() => {
@@ -291,15 +379,73 @@ export default function Page() {
   }, [loaderComplete]);
 
   const handleLoaderComplete = () => {
-    gsap.to('.loader', {
-      opacity: 0, duration: 0.5,
-      onComplete: () => setLoaderComplete(true),
-    });
+    setLoaderComplete(true);
   };
 
   return (
     <>
-      {!loaderComplete && <Loader onComplete={handleLoaderComplete} />}
+      {/* SEO semantic layer — crawler-readable, visually hidden from canvas design */}
+      <div className="sr-only">
+        <h1>Ramkumar Ganesh — Senior Product Designer &amp; UX Lead</h1>
+        <p>Senior Product Designer and UX Design Lead with 12+ years of experience designing B2B and B2C SaaS platforms. Specialising in design systems, information architecture, and design team leadership. Currently at Toyota Connected India. Open to global remote roles including Lead UX Designer, UX Design Manager, Design Director, UX Architect, and VP of UX.</p>
+
+        <section>
+          <h2>Selected Works</h2>
+          <article>
+            <h3>INFLEET — Fleet Management Design System</h3>
+            <p>Delivered Toyota B2B fleet management SaaS platform from 0 to production. Created 40+ component design system with WCAG AA accessibility standards across web, tablet, and mobile.</p>
+          </article>
+          <article>
+            <h3>Toyota i-Connect &amp; Lexus — Connected Driving Experience</h3>
+            <p>Drove 60% increase in product engagement by redesigning remote vehicle control, service booking, and vehicle health monitoring flows for B2C automotive SaaS.</p>
+          </article>
+          <article>
+            <h3>Wallstreet English — Global Learning Platform</h3>
+            <p>Increased course completion rates by 36% by redesigning the core digital classroom experience across 20 countries and multiple languages.</p>
+          </article>
+          <article>
+            <h3>Android &amp; iOS Smartwatch — i-Connect</h3>
+            <p>End-to-end UX design for wearable integration with connected vehicle features for Toyota i-Connect.</p>
+          </article>
+          <article>
+            <h3>HCI AI System Design — Fall Detection</h3>
+            <p>Human-Computer Interaction design for AI-driven fall detection and health monitoring system. Cambridge University HCI certification applied.</p>
+          </article>
+        </section>
+
+        <section>
+          <h2>About Ramkumar Ganesh — Senior Product Designer</h2>
+          <p>Senior Product Designer and Design Lead with expertise in: Product and UX Leadership, End-to-End Product Design from Discovery to Delivery, SaaS and Platform UX, Design Systems and Accessibility, Information Architecture, Service Design, User Research and Validation, Data-Driven UX and OKRs, and Design Mentorship and Hiring.</p>
+          <p>Tools: Figma, Sketch, Adobe XD, Adobe Creative Suite, Confluence, Miro, Maze, Firebase, Usertesting.com. AI-assisted tools: Claude Code, Emergent, Storybook, Replit, Cursor.</p>
+          <p>Available for Lead UX Designer, UX Design Architect, UX Design Manager, Design Director, and VP of UX roles. Open to global remote positions in B2B SaaS, FinTech, HealthTech, EdTech, Automotive, and Enterprise platforms.</p>
+        </section>
+
+        <section>
+          <h2>UX Design Process</h2>
+          <ol>
+            <li><h3>Strategizing</h3><p>Laying the foundation for success through stakeholder research, user interviews, and UX strategy definition.</p></li>
+            <li><h3>Discovery</h3><p>Transforming concepts into validated prototypes through information architecture, user flows, and interaction design.</p></li>
+            <li><h3>Creation</h3><p>Orchestrating seamless collaboration between design, product management, and frontend engineering teams.</p></li>
+            <li><h3>Optimizing</h3><p>Refining through rigorous usability testing, A/B experimentation, analytics review, and iterative improvement.</p></li>
+          </ol>
+        </section>
+
+        <footer>
+          <h2>Contact Ramkumar Ganesh</h2>
+          <address>
+            <p>Email: ramkumargd01@gmail.com</p>
+            <p>LinkedIn: linkedin.com/in/ramkumarux</p>
+            <p>Location: India — open to global remote</p>
+          </address>
+        </footer>
+      </div>
+
+      {!loaderComplete && (
+        <Loader
+          sceneReady={orchestratorReady}
+          onComplete={handleLoaderComplete}
+        />
+      )}
 
       {/* Mobile Swipe Edge Cue */}
       {mobileSwipeCue && responsive.isMobile && (
@@ -327,30 +473,12 @@ export default function Page() {
         </div>
       )}
 
-      {/* Preload WebGL while loader is still showing */}
-      {preparingExit && !loaderComplete && (
-        <div style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
-          <Background onReady={() => setBackgroundReady(true)} currentSection={activeSection} />
-          <div className="Background-Animation">
-            <Orchestrator
-              lenis={lenisRef.current}
-              responsive={responsive}
-              intensity={0.1}
-              enabled={true}
-              idleThresholdMs={700}
-              fadeLerpSpeed={0.05}
-              zoomAmount={1.12}
-              modelOffset={2}
-              enableMouse={true}
-            />
-          </div>
-        </div>
-      )}
-
-      {loaderComplete && (
+      {(preparingExit || loaderComplete) && (
         <div style={{ animation: 'fadeIn 1s ease-out' }}>
+          {/* ── CSS starfield + lemniscates + comets ── */}
+          <Background activeSection={activeSection} />
+
           {/* ── WebGL wormhole background ── */}
-          <Background currentSection={activeSection} />
           <div className="Background-Animation">
             <Orchestrator
               lenis={lenisRef.current}
@@ -366,9 +494,6 @@ export default function Page() {
             />
           </div>
 
-          {/* ── Home overlay: persistent neon text ── */}
-          <HomeOverlay activeSection={activeSection} />
-
           {/* ── Section overlays: Unified CSS proximity system ── */}
           <SectionOverlay activeSection={activeSection} />
 
@@ -379,10 +504,11 @@ export default function Page() {
             activeTab={activeSection}
             setActiveTab={handleSetActiveTab}
           />
-
-          <Cursor />
         </div>
       )}
+
+      {loaderComplete && <SocialSidebar />}
+      {loaderComplete && <Cursor />}
     </>
   );
 }
