@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -25,6 +28,12 @@ jobs:
       - name: Build static export
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          echo "=== Build output ==="
+          ls -la ./out/
+          echo "Total files: $(find ./out -type f | wc -l)"
+
       - name: Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
@@ -34,3 +43,4 @@ jobs:
           local-dir: ./out/
           server-dir: public_html/
           dangerous-clean-slate: true
+          log-level: verbose
