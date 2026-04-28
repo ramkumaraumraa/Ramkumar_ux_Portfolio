@@ -22,19 +22,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4.4.0
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build static export
+      - name: Build
         run: npm run build
 
       - name: Verify build output
         run: |
-          echo "Total files built: $(find ./out -type f | wc -l)"
-          ls ./out/
+          echo "Total files built: $(find .next -type f | wc -l)"
+          ls .next/
 
 # Deployment is handled automatically by Vercel.
 # Connect this repo at vercel.com — it deploys on every push to main.
