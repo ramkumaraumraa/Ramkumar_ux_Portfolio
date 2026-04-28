@@ -42,6 +42,6 @@ jobs:
           protocol: ftps
           port: 990
           local-dir: ./out/
-          server-dir: /
+          server-dir: public_html/
           dangerous-clean-slate: true
           log-level: verbose
