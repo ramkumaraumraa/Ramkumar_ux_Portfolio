@@ -16,8 +16,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ramkumar Ganesh — Senior Product Designer & UX Lead | Design Systems, SaaS",
-  description: "Senior Product Designer & UX Design Lead with 12+ years building B2B/B2C SaaS, design systems, and design teams. Toyota Connected. Open to Lead UX, Manager, Director & VP UX roles globally.",
+  title: "Ramkumar Ganesh — Senior Product Designer & UX Lead",
+  description: "Senior Product Designer & UX Lead with 12+ years in B2B/B2C SaaS, design systems, and team leadership. Toyota Connected. Open to global UX Lead, Manager, Director & VP roles.",
   keywords: [
     "Senior Product Designer", "UX Design Lead", "Lead UX Designer",
     "UX Design Manager", "Design Director", "UX Architect", "VP of UX",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     siteName: "Ramkumar Ganesh — UX Portfolio",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Ramkumar Ganesh — Senior Product Designer & UX Lead" }],
     locale: "en_US",
-    type: "profile",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
@@ -86,6 +86,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${sourceSans3.variable} ${jetbrainsMono.variable}`}>
       <head>
+        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link rel="preconnect" href="https://use.typekit.net" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://use.typekit.net/pwm3hft.css" />
         {/* JSON-LD structured data — rendered as raw text in SSR, safe static content */}
