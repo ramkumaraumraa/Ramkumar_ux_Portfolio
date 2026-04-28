@@ -1,7 +1,10 @@
-name: Build & Deploy to Hostinger
+name: CI — Build Check
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -9,7 +12,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,15 +36,5 @@ jobs:
           echo "Total files built: $(find ./out -type f | wc -l)"
           ls ./out/
 
-      - name: Deploy to Hostinger via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 990
-          local-dir: ./out/
-          server-dir: public_html/
-          dangerous-clean-slate: true
-          log-level: verbose
+# Deployment is handled automatically by Vercel.
+# Connect this repo at vercel.com — it deploys on every push to main.
