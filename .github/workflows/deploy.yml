@@ -30,17 +30,13 @@ jobs:
 
       - name: Verify build output
         run: |
-          echo "=== Build output ==="
-          ls -la ./out/
-          echo "Total files: $(find ./out -type f | wc -l)"
+          echo "Total files built: $(find ./out -type f | wc -l)"
+          ls ./out/
 
-      - name: Deploy to Hostinger via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./out/
-          server-dir: public_html/
-          dangerous-clean-slate: true
-          log-level: verbose
+      - name: Deploy to Hostinger via SSH
+        run: |
+          sudo apt-get install -y sshpass
+          sshpass -p "${{ secrets.FTP_PASSWORD }}" rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no -p 22" \
+            ./out/ \
+            "${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:~/public_html/"
