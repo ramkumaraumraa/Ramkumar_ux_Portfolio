@@ -103,7 +103,7 @@ export default function RootLayout({
       <body className="antialiased min-h-screen">
         <div id="nebula-bg"></div>
         {children}
-        <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=G-534725075" />
+        <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=G-K718ZEJ68L" />
         <Script strategy="afterInteractive" src="/gtag.js" />
       </body>
     </html>
