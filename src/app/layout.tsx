@@ -17,14 +17,14 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Ramkumar Ganesh — Senior Product Designer & UX Lead",
-  description: "Senior Product Designer & UX Lead with 12+ years in B2B/B2C SaaS, design systems, and team leadership. Toyota Connected. Open to global UX Lead, Manager, Director & VP roles.",
+  description: "Senior Product Designer & UX Lead based in Chennai, India. 12+ years in SaaS. Open to global remote (USD) and relocation to UK, Netherlands, Ireland, Switzerland, New Zealand, & Australia.",
   keywords: [
     "Senior Product Designer", "UX Design Lead", "Lead UX Designer",
     "UX Design Manager", "Design Director", "UX Architect", "VP of UX",
+    "UX Designer Chennai", "Product Designer Chennai", "Global Remote UX Designer",
     "B2B SaaS UX Designer", "Design Systems Expert", "Product Designer India",
     "Toyota Connected UX", "UX Leadership", "Figma", "WCAG Accessibility",
-    "Information Architecture", "User Research", "Interaction Design",
-    "Design Thinking", "End-to-End Product Design", "Remote UX Lead",
+    "Relocate to UK", "Relocate to Europe", "Relocate to Australia", "Relocate to New Zealand",
   ],
   authors: [{ name: "Ramkumar Ganesh", url: "https://www.ramkumarux.com" }],
   creator: "Ramkumar Ganesh",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://www.ramkumarux.com" },
   openGraph: {
     title: "Ramkumar Ganesh — Senior Product Designer & UX Lead",
-    description: "12+ years designing B2B/B2C SaaS, design systems & teams. Toyota Connected. Open to global UX Lead, Manager, Director & VP roles.",
+    description: "Senior Product Designer based in Chennai. 12+ years SaaS UX. Open to global remote roles & relocation to UK, EU, and ANZ.",
     url: "https://www.ramkumarux.com",
     siteName: "Ramkumar Ganesh — UX Portfolio",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Ramkumar Ganesh — Senior Product Designer & UX Lead" }],
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Ramkumar Ganesh — Senior Product Designer & UX Lead",
-    description: "12+ years in B2B/B2C SaaS, design systems & teams. Open to global UX Lead, Manager & Director roles.",
+    description: "Senior Product Designer based in Chennai. 12+ years SaaS UX. Open to global remote roles & relocation to UK, EU, and ANZ.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -57,12 +57,16 @@ const personSchema = JSON.stringify({
   "@type": "Person",
   name: "Ramkumar Ganesh",
   jobTitle: "Senior Product Designer & UX Design Lead",
-  description: "Senior Product Designer and Design Lead with 12+ years designing B2B and B2C SaaS platforms, design systems, and leading design teams globally.",
+  description: "Senior Product Designer and Design Lead based in Chennai, India with 12+ years experience. Open to global remote opportunities (USD) and willing to relocate to the UK, Netherlands, Ireland, Switzerland, New Zealand, and Australia.",
   url: "https://www.ramkumarux.com",
   email: "ramkumargd01@gmail.com",
-  sameAs: ["https://www.linkedin.com/in/ramkumarux/"],
+  sameAs: [
+    "https://www.linkedin.com/in/ramkumarux/",
+    "https://www.instagram.com/ramkumargd01/",
+    "https://adplist.org/mentors/ramkumar-g"
+  ],
   image: "https://www.ramkumarux.com/assets/imgs/About/My%20Pic%201.png",
-  address: { "@type": "PostalAddress", addressCountry: "IN" },
+  address: { "@type": "PostalAddress", addressLocality: "Chennai", addressCountry: "IN" },
   worksFor: { "@type": "Organization", name: "Toyota Connected India" },
   knowsAbout: [
     "Product Design", "UX Design", "Design Systems", "User Research",

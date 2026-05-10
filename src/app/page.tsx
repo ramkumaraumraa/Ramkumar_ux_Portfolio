@@ -415,9 +415,9 @@ export default function Page() {
 
         <section>
           <h2>About Ramkumar Ganesh — Senior Product Designer</h2>
-          <p>Senior Product Designer and Design Lead with expertise in: Product and UX Leadership, End-to-End Product Design from Discovery to Delivery, SaaS and Platform UX, Design Systems and Accessibility, Information Architecture, Service Design, User Research and Validation, Data-Driven UX and OKRs, and Design Mentorship and Hiring.</p>
+          <p>Senior Product Designer and Design Lead based in Chennai, India. Expertise in: Product and UX Leadership, End-to-End Product Design from Discovery to Delivery, SaaS and Platform UX, Design Systems and Accessibility, Information Architecture, Service Design, User Research and Validation, Data-Driven UX and OKRs, and Design Mentorship and Hiring.</p>
           <p>Tools: Figma, Sketch, Adobe XD, Adobe Creative Suite, Confluence, Miro, Maze, Firebase, Usertesting.com. AI-assisted tools: Claude Code, Emergent, Storybook, Replit, Cursor.</p>
-          <p>Available for Lead UX Designer, UX Design Architect, UX Design Manager, Design Director, and VP of UX roles. Open to global remote positions in B2B SaaS, FinTech, HealthTech, EdTech, Automotive, and Enterprise platforms.</p>
+          <p>Available for Lead UX Designer, UX Design Architect, UX Design Manager, Design Director, and VP of UX roles. I am open to global remote positions (USD) and actively open to relocation to the UK, Netherlands, Ireland, Switzerland, New Zealand, and Australia.</p>
         </section>
 
         <section>
